@@ -1,6 +1,9 @@
 """Extreme Learning Machine (ELM)"""
 
-from numpy import seed, ndarray
+from numpy import ndarray
+from numpy.random import seed
+from numpy.linalg import pinv
+
 from src.utils import one_hot_encode, sigmoid
 
 def fit_single_layer(X:ndarray,Y:ndarray,R:ndarray) -> ndarray:

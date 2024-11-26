@@ -1,2 +1,2 @@
 # ddelm
-Deep Extreme Learning Machine
+Diffusion-based Extreme Deep Learning Machine

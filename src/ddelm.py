@@ -1,8 +1,10 @@
 """Deep Diffusion Extreme Learning Machine (DDELM)"""
 
-from numpy import ndarray
-from numpy.random import seed
-from src.utils import one_hot_encode, sigmoid,  random_noise
+from numpy import ndarray, argmax, linspace, ones
+from numpy.random import seed, uniform
+from numpy.linalg import pinv
+
+from src.utils import one_hot_encode, sigmoid
 
 
 def fit_multi_layered(
@@ -16,17 +18,26 @@ def fit_multi_layered(
     """Fit a multi-layered ELM"""
     h_dim,_ = Rh.shape
     _,o_dim = Y.shape
-    noise_levels = linspace(1, 0, num=n_layers+2)[1:-1]
+    noise_levels = linspace(0, 1, num=n_layers+2)[1:-1]
+    noise_level = noise_levels[0]
 
     H1 = sigmoid(X @ Ri)
-    Y1 = Y @ random_noise(value=noise_levels[0],shape=(o_dim,h_dim))
+    Ry1 = uniform(
+        low=-noise_levels[0], high=noise_levels[0],
+        size=(o_dim,h_dim)
+    )
+    Y1 = Y @ Ry1
     W1 = pinv(H1) @ Y1
     Y_hat = H1 @ W1
     Ws = [W1]
 
     for noise_level in noise_levels[1:]:
         Hn = sigmoid(Y_hat @ Rh)
-        Yn = Y @ random_noise(value=noise_level,shape=(o_dim, h_dim))
+        Ryn = uniform(
+            low=-noise_level, high=noise_level,
+            size=(o_dim,h_dim)
+        )
+        Yn = Y @ Ryn
         Wn = pinv(Hn) @ Yn
         Ws.append(Wn)
         Y_hat = Hn @ Wn
@@ -56,14 +67,17 @@ class DDELM:
         hidden_dimension:int=1000,
     ) -> None:
         seed(42)
-        self.Ri = random_noise(
-            value=.1,shape=(input_dimension, hidden_dimension)
+        self.Ri = uniform(
+            low=-.1, high=.1,
+            size=(input_dimension, hidden_dimension)
         )
-        self.Rh = random_noise(
-            value=.1, shape=(hidden_dimension, hidden_dimension)
+        self.Rh = uniform(
+            low=-.1, high=.1,
+            size=(hidden_dimension, hidden_dimension)
         )
-        self.Ro = random_noise(
-            value=.1,shape=(hidden_dimension,output_dimension)
+        self.Ro = uniform(
+            low=-.1, high=.1,
+            size=(hidden_dimension, output_dimension)
         )
         self.d_o = output_dimension
         self.n_layers = n_layers 

@@ -14,7 +14,7 @@ _,d_i = X.shape
 d_o = max(data.target)+1
 d_h=100
 
-n_layers = 100
+n_layers = 5
 
 
 elm = ELM(input_dimension=d_i,output_dimension=d_o,hidden_dimension=d_h)

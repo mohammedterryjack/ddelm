@@ -1,7 +1,7 @@
 """Extreme Learning Machine (ELM)"""
 
-from numpy import ndarray
-from numpy.random import seed
+from numpy import ndarray, argmax
+from numpy.random import seed, uniform
 from numpy.linalg import pinv
 
 from src.utils import one_hot_encode, sigmoid
@@ -26,10 +26,10 @@ class ELM:
     ) -> None:
         seed(42)
 
-        self.R = random_noise(
-            value=.1,
-            shape=(input_dimension, hidden_dimension)
-        )
+        self.R = uniform(
+            low=-.1, high=1.,
+            size=(input_dimension, hidden_dimension)
+        )        
         self.d_o = output_dimension 
 
     def fit(self, X:ndarray, Y:ndarray) -> None:

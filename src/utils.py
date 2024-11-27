@@ -1,7 +1,5 @@
 
-from numpy import ndarray, exp, linspace, argmax, zeros
-from numpy.random import uniform, seed
-from numpy.linalg import pinv
+from numpy import ndarray, exp, zeros
 
  
 def one_hot_encode(class_ids:list[int], n_classes:int) -> ndarray:
@@ -15,9 +13,3 @@ def sigmoid(x: ndarray) -> ndarray:
     """activation function"""
     return 1. / (1. + exp(-x))
  
-
-def random_noise(value:float,shape:tuple[int,int]) -> ndarray:
-    return uniform(
-        low=-value, high=value,
-        size=shape
-    )

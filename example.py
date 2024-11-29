@@ -12,17 +12,18 @@ X_train, _, Y_train,_ = train_test_split(X, Y_true, test_size=0.3, random_state=
 
 _,d_i = X.shape
 d_o = max(data.target)+1
-d_h=100
-
-n_layers = 5
 
 
-elm = ELM(input_dimension=d_i,output_dimension=d_o,hidden_dimension=d_h)
+
+elm = ELM(input_dimension=d_i,output_dimension=d_o,hidden_dimension=150)
 elm.fit(X=X_train,Y=Y_train)
 Y_elm = elm.predict(X=X)
 
  
-ddelm = DDELM(n_layers=n_layers,input_dimension=d_i,output_dimension=d_o,hidden_dimension=d_h)
+ddelm = DDELM(
+    input_dimension=d_i,output_dimension=d_o,
+    hidden_dimensions=[50,40,30,20,10]
+)
 ddelm.fit(X=X_train,Y=Y_train)
 Y_ddelm = ddelm.predict(X=X)
 

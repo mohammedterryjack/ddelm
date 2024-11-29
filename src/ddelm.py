@@ -10,32 +10,35 @@ from src.utils import one_hot_encode, sigmoid
 def fit_multi_layered(
     X:ndarray,
     Y:ndarray,
-    Ri:ndarray,
-    Rh:ndarray,
-    Ro:ndarray,
-    n_layers:int
+    Rs:list[ndarray],
 ) -> list[ndarray]:
     """Fit a multi-layered ELM"""
-    h_dim,_ = Rh.shape
     _,o_dim = Y.shape
-    noise_levels = linspace(0, 1, num=n_layers+2)[1:-1]
+    noise_levels = linspace(0, 1, num=len(Rs)+2)[1:-1]
     noise_level = noise_levels[0]
+
+    Ri = Rs[0]
+    Rhs = Rs[1:-1]
+    Ro = Rs[-1]
+
+    h_dim_next,_ = Rhs[0].shape
 
     H1 = sigmoid(X @ Ri)
     Ry1 = uniform(
         low=-noise_levels[0], high=noise_levels[0],
-        size=(o_dim,h_dim)
+        size=(o_dim,h_dim_next)
     )
     Y1 = Y @ Ry1
     W1 = pinv(H1) @ Y1
     Y_hat = H1 @ W1
     Ws = [W1]
 
-    for noise_level in noise_levels[1:]:
-        Hn = sigmoid(Y_hat @ Rh)
+    for noise_level,layer in zip(noise_levels[1:],range(len(Rhs)-1)):
+        h_dim_next,_ = Rhs[layer+1].shape
+        Hn = sigmoid(Y_hat @ Rhs[layer])
         Ryn = uniform(
             low=-noise_level, high=noise_level,
-            size=(o_dim,h_dim)
+            size=(o_dim,h_dim_next)
         )
         Yn = Y @ Ryn
         Wn = pinv(Hn) @ Yn
@@ -48,10 +51,14 @@ def fit_multi_layered(
     return Ws
  
 
-def transform_multi_layered(X:ndarray, Ri:ndarray, Rh:ndarray, Ro:ndarray, Ws:list[ndarray]) -> ndarray:
+def transform_multi_layered(X:ndarray,Rs:list[ndarray], Ws:list[ndarray]) -> ndarray:
+    Ri = Rs[0]
+    Rhs = Rs[1:-1]
+    Ro = Rs[-1]
+
     H = sigmoid(X@Ri)
     Y_hat = H @ Ws[0]
-    for Wn in Ws[1:-1]:
+    for Wn,Rh in zip(Ws[1:-1],Rhs):
         Hn = sigmoid(Y_hat @ Rh)
         Y_hat = Hn @ Wn
     Ho = sigmoid(Y_hat @ Ro)
@@ -61,31 +68,33 @@ def transform_multi_layered(X:ndarray, Ri:ndarray, Rh:ndarray, Ro:ndarray, Ws:li
 class DDELM:
     def __init__(
         self,
-        n_layers:int,
         input_dimension:int,
         output_dimension:int,
-        hidden_dimension:int=1000,
+        hidden_dimensions:list[int],
     ) -> None:
         seed(42)
-        self.Ri = uniform(
-            low=-.1, high=.1,
-            size=(input_dimension, hidden_dimension)
-        )
-        self.Rh = uniform(
-            low=-.1, high=.1,
-            size=(hidden_dimension, hidden_dimension)
-        )
-        self.Ro = uniform(
-            low=-.1, high=.1,
-            size=(hidden_dimension, output_dimension)
-        )
+        self.Rs = [
+            uniform(
+                low=-.1, high=.1,
+                size=(input_dimension, input_dimension)
+            )
+        ] + [
+            uniform(
+                low=-.1, high=.1,
+                size=(hidden_dimensions[i],hidden_dimensions[i])
+            ) for i in range(len(hidden_dimensions))
+        ] + [ 
+            uniform(
+                low=-.1, high=.1,
+                size=(hidden_dimensions[-1], hidden_dimensions[-1])
+            )
+        ]
         self.d_o = output_dimension
-        self.n_layers = n_layers 
 
     def fit(self, X:ndarray, Y:ndarray) -> None:
         Y = one_hot_encode(class_ids=Y,n_classes=self.d_o)
-        self.Ws = fit_multi_layered(X=X,Y=Y,Ri=self.Ri,Rh=self.Rh,Ro=self.Ro,n_layers=self.n_layers)
+        self.Ws = fit_multi_layered(X=X,Y=Y,Rs=self.Rs)
 
     def predict(self, X:ndarray) -> int:
-        Y_hat = transform_multi_layered(X=X,Ri=self.Ri,Rh=self.Rh,Ro=self.Ro,Ws=self.Ws)
+        Y_hat = transform_multi_layered(X=X,Rs=self.Rs,Ws=self.Ws)
         return argmax(Y_hat,axis=1)

@@ -15,14 +15,14 @@ d_o = max(data.target)+1
 
 
 
-elm = ELM(input_dimension=d_i,output_dimension=d_o,hidden_dimension=150)
+elm = ELM(input_dimension=d_i,output_dimension=d_o,hidden_dimension=100)
 elm.fit(X=X_train,Y=Y_train)
 Y_elm = elm.predict(X=X)
 
  
 ddelm = DDELM(
     input_dimension=d_i,output_dimension=d_o,
-    hidden_dimensions=[50,40,30,20,10]
+    hidden_dimensions=[40,30,20,10]
 )
 ddelm.fit(X=X_train,Y=Y_train)
 Y_ddelm = ddelm.predict(X=X)

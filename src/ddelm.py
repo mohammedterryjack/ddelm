@@ -1,6 +1,6 @@
 """Deep Diffusion Extreme Learning Machine (DDELM)"""
 
-from numpy import ndarray, argmax, linspace
+from numpy import ndarray, argmax
 from numpy.random import seed, uniform
 from numpy.linalg import pinv
 
@@ -57,11 +57,10 @@ class DDELM:
     ) -> list[ndarray]:
         """Fit a multi-layered ELM"""
         _, o_dim = Y.shape
-        noise_levels = linspace(0, 1, num=len(layer_dimensions) + 2)[1:-1]
 
         Ws = []
         Y_hat = X
-        for noise_level, layer in zip(noise_levels, range(len(layer_dimensions) - 1)):
+        for layer in range(len(layer_dimensions) - 1):
             h_dim_next = layer_dimensions[layer + 1]
             Rh = R[: layer_dimensions[layer], : layer_dimensions[layer]]
             H = activation(Y_hat @ Rh)

@@ -4,7 +4,7 @@ from numpy import ndarray, argmax
 from numpy.random import seed, uniform
 from numpy.linalg import pinv
 
-from src.utils import one_hot_encode, sigmoid, relu
+from src.utils import one_hot_encode, relu, sigmoid
 
 
 class ELM:
@@ -13,7 +13,7 @@ class ELM:
         input_dimension: int,
         output_dimension: int,
         hidden_dimension: int = 1000,
-        activation_function: callable = relu,  # sigmoid
+        activation_function: callable = sigmoid #relu
     ) -> None:
         seed(42)
 

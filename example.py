@@ -7,7 +7,7 @@ from src.ddelm import DDELM
 from src.delm import DELM
 
 data = load_data()
-X_train, X_test, Y_train, Y_test = train_test_split(data.data, data.target, test_size=0.5, random_state=42)
+X_train, X_test, Y_train, Y_test = train_test_split(data.data, data.target, test_size=0.9, random_state=42)
 
 _, d_i = data.data.shape
 d_o = max(data.target) + 1
@@ -15,7 +15,7 @@ d_o = max(data.target) + 1
 
 elm = ELM(input_dimension=d_i, output_dimension=d_o, hidden_dimension=100)
 ddelm = DDELM(
-    input_dimension=d_i, output_dimension=d_o, hidden_dimensions=[40, 30, 20, 10]
+    input_dimension=d_i, output_dimension=d_o, hidden_dimensions=[40, 30, 20, 10],
 )
 delm = DELM(
     input_dimension=d_i, output_dimension=d_o, hidden_dimensions=[40, 30, 20, 10]

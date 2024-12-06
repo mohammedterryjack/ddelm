@@ -1,10 +1,10 @@
 """Deep Extreme Learning Machine (DELM)"""
 
-from numpy import ndarray, argmax
+from numpy import ndarray, argmax, where
 from numpy.random import seed, uniform
 from numpy.linalg import pinv
 
-from src.utils import one_hot_encode, relu
+from src.utils import one_hot_encode, relu, sigmoid, inverse_sigmoid
 
 
 class DELM:
@@ -13,20 +13,22 @@ class DELM:
         input_dimension: int,
         hidden_dimensions: list[int],
         output_dimension: int,
-        activation_function: callable = relu,  # sigmoid
     ) -> None:
         seed(42)
         self.d_o = output_dimension
         self.dims = [input_dimension] + hidden_dimensions + [output_dimension]
-        self.a = activation_function
+        self.activation = sigmoid #relu
+        self.inverse_activation = lambda x:x #inverse_sigmoid
 
     def fit(self, X: ndarray, Y: ndarray) -> None:
         Y = one_hot_encode(class_ids=Y, n_classes=self.d_o)
-        self.Ws = self.learn_weights(X=X,Y=Y,dims=self.dims,activation=self.a)
+        self.Ws = self.learn_weights(X=X,Y=Y,dims=self.dims,activation=self.activation,inverse_activation=self.inverse_activation)
 
-    def predict(self, X: ndarray) -> int:
-        Y_hat = self.forward(X=X,Ws=self.Ws,activation=self.a)
-        return argmax(Y_hat, axis=1)
+    def predict(self, X: ndarray, multilabel_threshold:float|None=None) -> int:
+        Y_hat = self.forward(X=X,Ws=self.Ws,activation=self.activation)
+        if multilabel_threshold is None:
+            return argmax(Y_hat, axis=1)
+        return where(Y_hat>multilabel_threshold)
 
     def learn_weights(
         self,
@@ -34,6 +36,7 @@ class DELM:
         Y: ndarray,
         dims: list[int],
         activation: callable,
+        inverse_activation: callable
     ) -> list[ndarray]:
         """Fit a multi-layered ELM"""
 
@@ -42,7 +45,7 @@ class DELM:
             Y_hat_next = self.backward(
                 Y=Y,
                 Ws=Ws[i+1:],
-                inverse_activation=lambda x:x #TODO
+                inverse_activation=inverse_activation
             )
             Y_hat = self.forward(
                 X=X,

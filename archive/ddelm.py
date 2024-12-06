@@ -1,4 +1,4 @@
-"""Deep Diffusion Extreme Learning Machine (DDELM)"""
+"""Deep Extreme Learning Machine (DELM) using Target Prop (TP)"""
 
 from numpy import ndarray, argmax
 from numpy.random import seed, uniform

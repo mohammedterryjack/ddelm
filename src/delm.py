@@ -22,7 +22,14 @@ class DELM:
 
     def fit(self, X: ndarray, Y: ndarray) -> None:
         Y = one_hot_encode(class_ids=Y, n_classes=self.d_o)
-        self.Ws = self.learn_weights(X=X,Y=Y,dims=self.dims,activation=self.activation,inverse_activation=self.inverse_activation)
+        R = uniform(low=-0.1, high=0.1, size=(max(self.dims[:-1]), max(self.dims[1:])))
+        randomly_initialised_weights = list(map(lambda d1,d2:R[:d1,:d2], self.dims[:-1],self.dims[1:]))
+        self.Ws = self.finetune_weights(
+            X=X,Y=Y,
+            Ws=randomly_initialised_weights,
+            dims=self.dims,activation=self.activation,
+            inverse_activation=self.inverse_activation
+        )
 
     def predict(self, X: ndarray, multilabel_threshold:float|None=None) -> int:
         Y_hat = self.forward(X=X,Ws=self.Ws,activation=self.activation)
@@ -30,24 +37,22 @@ class DELM:
             return argmax(Y_hat, axis=1)
         return where(Y_hat>multilabel_threshold)
 
-    def learn_weights(
-        self,
+    @staticmethod
+    def finetune_weights(
         X: ndarray,
         Y: ndarray,
+        Ws: list[ndarray],
         dims: list[int],
         activation: callable,
         inverse_activation: callable
     ) -> list[ndarray]:
-        """Fit a multi-layered ELM"""
-
-        Ws = list(map(lambda d1,d2:uniform(low=-0.1, high=0.1, size=(d1,d2)), dims[:-1],dims[1:]))
         for i in range(len(Ws)-1):
-            Y_hat_next = self.backward(
+            Y_hat_next = DELM.backward(
                 Y=Y,
                 Ws=Ws[i+1:],
                 inverse_activation=inverse_activation
             )
-            Y_hat = self.forward(
+            Y_hat = DELM.forward(
                 X=X,
                 Ws=Ws[:i],
                 activation=activation

@@ -4,7 +4,7 @@ from numpy import ndarray, argmax, where
 from numpy.random import seed, uniform
 from numpy.linalg import pinv
 
-from src.utils import one_hot_encode, relu, sigmoid, inverse_sigmoid
+from src.utils import one_hot_encode, Activation, inverse_activation, activation_function
 
 
 class DELM:
@@ -13,12 +13,13 @@ class DELM:
         input_dimension: int,
         hidden_dimensions: list[int],
         output_dimension: int,
+        activation:Activation,
     ) -> None:
         seed(42)
         self.d_o = output_dimension
         self.dims = [input_dimension] + hidden_dimensions + [output_dimension]
-        self.activation = sigmoid #relu
-        self.inverse_activation = lambda x:x #inverse_sigmoid
+        self.activation = activation_function(activation)
+        self.inverse_activation = inverse_activation(activation) 
 
     def fit(self, X: ndarray, Y: ndarray) -> None:
         Y = one_hot_encode(class_ids=Y, n_classes=self.d_o)

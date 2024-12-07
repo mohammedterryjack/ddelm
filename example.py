@@ -2,6 +2,7 @@ from matplotlib.pyplot import subplots, show
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_breast_cancer, load_digits
+from sklearn.neural_network import MLPClassifier
 
 from src.utils import Activation, inverse_activation
 from src.elm import ELM
@@ -27,8 +28,8 @@ for dataset in (
 
     _, elm_axes = subplots(len(Activation), 2, figsize=(15, 5)) 
     _, delm_axes = subplots(len(Activation), len(dataset['delm_dimensions'])+1, figsize=(15, 5)) 
+    _, dnn_axes = subplots(len(Activation), len(dataset['delm_dimensions'])+1, figsize=(15, 5)) 
     for j,a in enumerate(Activation): 
-
         _, d_i = data.data.shape
         d_o = max(data.target) + 1
 
@@ -37,35 +38,53 @@ for dataset in (
             hidden_dimension=dataset['elm_dimensions'],
             activation=a
         )
+        elm.fit(X=X_train, Y=Y_train)
+        for i, W in enumerate([elm.R,elm.W]):
+            ax = elm_axes[j,i]
+            ax.imshow(W)  
+            if i==0:
+                ax.set_ylabel(a.name)
+            if j==len(Activation)-1:
+                ax.set_xlabel(f"W {i}")   
+        Y_elm = elm.predict(X=X_test)
+        accuracy_elm = accuracy_score(Y_test, Y_elm)
+
+
         delm = DELM(
             input_dimension=d_i, output_dimension=d_o, 
             hidden_dimensions=dataset['delm_dimensions'],
             activation=a
         )
-
-        elm.fit(X=X_train, Y=Y_train)
         delm.fit(X=X_train, Y=Y_train)
-
-        elm_axes[j,0].imshow(elm.R)
-        elm_axes[j,0].set_xlabel("W 0")
-        elm_axes[j,0].set_ylabel(a.name)
-        elm_axes[j,1].imshow(elm.W)
-        elm_axes[j,1].set_xlabel("W 1")
-
         for i, W in enumerate(delm.Ws):
             ax = delm_axes[j,i]
             ax.imshow(W)  
             if i==0:
                 ax.set_ylabel(a.name)
             if j==len(Activation)-1:
-                ax.set_xlabel(f"W {i}")
-        
-        Y_elm = elm.predict(X=X_test)
+                ax.set_xlabel(f"W {i}")    
         Y_delm = delm.predict(X=X_test)
-
-        accuracy_elm = accuracy_score(Y_test, Y_elm)
         accuracy_delm = accuracy_score(Y_test, Y_delm)
+
+        if a in (Activation.IDENTITY, Activation.RELU):
+            dnn = MLPClassifier(
+                hidden_layer_sizes=dataset['delm_dimensions'],
+                activation=a.name.lower()
+            )
+            dnn.fit(X=X_train, y=Y_train)
+            for i, W in enumerate(dnn.coefs_):
+                ax = dnn_axes[j,i]
+                ax.imshow(W)  
+                if i==0:
+                    ax.set_ylabel(a.name)
+                if j==len(Activation)-1:
+                    ax.set_xlabel(f"W {i}")
+            Y_dnn = dnn.predict(X=X_test)
+            accuracy_dnn = accuracy_score(Y_test, Y_dnn)
+        else:
+            accuracy_dnn = -1.0
+
         print(
-            f"\n\nDataset {dataset['name']}: (d_i={d_i}, d_o={d_o})\nActivation: {a.name}\nAccuracy: \n\tELM:{accuracy_elm * 100:.2f}%\n\tDELM:{accuracy_delm * 100:.2f}%"
+            f"\n\nDataset {dataset['name']}: (d_i={d_i}, d_o={d_o})\nActivation: {a.name}\nAccuracy: \n\tELM:{accuracy_elm * 100:.2f}%\n\tDELM:{accuracy_delm * 100:.2f}%\n\tDNN:{accuracy_dnn * 100:.2f}%"
         )
     show()

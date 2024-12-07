@@ -14,6 +14,7 @@ from numpy import (
 )
 
 class Activation(Enum):
+    IDENTITY="identity"
     SINE="sine"
     COSINE = "cosine"
     TAN = "tan"
@@ -21,10 +22,11 @@ class Activation(Enum):
 
 def activation_function(activation:Activation) -> callable:
     return {
+        Activation.IDENTITY:lambda x:x,
+        Activation.RELU:lambda x:maximum(0, x),
         Activation.SINE:sin,
         Activation.COSINE:cos,
         Activation.TAN:tan,
-        Activation.RELU:lambda x:maximum(0, x)
     }[activation]
 
 def inverse_activation(activation:Activation) -> callable:

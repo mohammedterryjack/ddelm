@@ -12,7 +12,8 @@ for load_data in (load_breast_cancer,):#, load_diabetes):
     data = load_data()
     X_train, X_test, Y_train, Y_test = train_test_split(data.data, data.target, test_size=0.1, random_state=42)
 
-    fig, axes = subplots(len(Activation), 5, figsize=(15, 5)) 
+    _, elm_axes = subplots(len(Activation), 2, figsize=(15, 5)) 
+    _, delm_axes = subplots(len(Activation), 5, figsize=(15, 5)) 
     for j,a in enumerate(Activation): 
 
         _, d_i = data.data.shape
@@ -32,8 +33,11 @@ for load_data in (load_breast_cancer,):#, load_diabetes):
         elm.fit(X=X_train, Y=Y_train)
         delm.fit(X=X_train, Y=Y_train)
 
+        elm_axes[j,0].imshow(elm.R)
+        elm_axes[j,1].imshow(elm.W)
+
         for i, W in enumerate(delm.Ws):
-            ax = axes[j,i]
+            ax = delm_axes[j,i]
             ax.imshow(W)  
             if i==0:
                 ax.set_ylabel(a.name)

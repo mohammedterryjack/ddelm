@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_breast_cancer, load_digits
 from sklearn.neural_network import MLPClassifier
 
-from src.utils import Activation, inverse_activation
+from src.utils import Activation
 from src.elm import ELM
 from src.delm import DELM
 

@@ -85,6 +85,6 @@ for dataset in (
             accuracy_dnn = -1.0
 
         print(
-            f"\n\nDataset {dataset['name']}: (d_i={d_i}, d_o={d_o})\nActivation: {a.name}\nAccuracy: \n\tELM:{accuracy_elm * 100:.2f}%\n\tDELM:{accuracy_delm * 100:.2f}%\n\tDNN:{accuracy_dnn * 100:.2f}%"
+            f"\n\nDataset {dataset['name']}: (d_i={d_i}, d_o={d_o})\nActivation: {a.value}\nAccuracy: \n\tELM:{accuracy_elm * 100:.2f}%\n\tDELM:{accuracy_delm * 100:.2f}%\n\tDNN:{accuracy_dnn * 100:.2f}%"
         )
     show()

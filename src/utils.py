@@ -12,28 +12,32 @@ from numpy import (
     tan,
     arctan
 )
+from scipy.fft import dct, idct
 
 class Activation(Enum):
     IDENTITY="identity"
-    SINE="sine"
-    COSINE = "cosine"
+    SIN="sine"
+    COS = "cosine"
     TAN = "tan"
-    RELU="relu" 
+    RELU="rectified linear unit"
+    CT="cosine transform" 
 
 def activation_function(activation:Activation) -> callable:
     return {
         Activation.IDENTITY:lambda x:x,
         Activation.RELU:lambda x:maximum(0, x),
-        Activation.SINE:sin,
-        Activation.COSINE:cos,
+        Activation.SIN:sin,
+        Activation.COS:cos,
         Activation.TAN:tan,
+        Activation.CT:dct
     }[activation]
 
 def inverse_activation(activation:Activation) -> callable:
     f = {
-        Activation.SINE:arcsin,
-        Activation.COSINE:arccos,
+        Activation.SIN:arcsin,
+        Activation.COS:arccos,
         Activation.TAN:arctan,
+        Activation.CT:idct,
     }.get(activation, lambda x:x)
     return lambda x:nan_to_num(f(x),nan=0.0)
 

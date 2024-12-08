@@ -56,7 +56,7 @@ for settings in (
         name= 'digits',
         load_data=load_digits,
         h_dims=[30,20,10,3],
-        a=Activation.SIN
+        a=Activation.RELU
     )
 ):
     data = settings['load_data']()
@@ -74,8 +74,16 @@ for settings in (
     )
     cnn.forward = cnn_forward
     cnn.backward = cnn_backward
-
     cnn.fit(X=X,Y=Y)
+
+    Y_cnn = cnn.predict(X=X)
+    accuracy_cnn = accuracy_score(Y, Y_cnn)
+    print(accuracy_cnn)
+
+    _, axes = subplots(1, len(cnn.Ws), figsize=(15, 5)) 
+    for i, W in enumerate(cnn.Ws):
+        axes[i].imshow(W)  
+    show()
 
     if settings['name']=='digits':
         n_samples = 10
@@ -89,12 +97,12 @@ for settings in (
         axes.imshow(y_hat[:n_samples],cmap='gray')
         show()
 
-
-    Y_cnn = cnn.predict(X=X)
-    accuracy_delm = accuracy_score(Y, Y_cnn)
-    print(accuracy_delm)
-
-    _, axes = subplots(1, len(cnn.Ws), figsize=(15, 5)) 
-    for i, W in enumerate(cnn.Ws):
-        axes[i].imshow(W)  
-    show()
+        classifier_head = DELM(
+            input_dimension=y_hat.shape[1], output_dimension=d_o, 
+            hidden_dimensions=[300,200,100],
+            activation=settings['a']
+        )
+        classifier_head.fit(X=y_hat,Y=Y)
+        Y_hat = classifier_head.predict(X=y_hat)
+        accuracy_cnn = accuracy_score(Y, Y_hat)
+        print(accuracy_cnn)

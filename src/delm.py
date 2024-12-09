@@ -38,8 +38,8 @@ class DELM:
             return argmax(Y_hat, axis=1)
         return where(Y_hat>multilabel_threshold)
 
-    @staticmethod
     def finetune_weights(
+        self,
         X: ndarray,
         Y: ndarray,
         Ws: list[ndarray],
@@ -48,12 +48,12 @@ class DELM:
         inverse_activation: callable
     ) -> list[ndarray]:
         for i in range(len(Ws)-1):
-            Y_hat_next = DELM.backward(
+            Y_hat_next = self.backward(
                 Y=Y,
                 Ws=Ws[i+1:],
                 inverse_activation=inverse_activation
             )
-            Y_hat = DELM.forward(
+            Y_hat = self.forward(
                 X=X,
                 Ws=Ws[:i],
                 activation=activation

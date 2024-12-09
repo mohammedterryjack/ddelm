@@ -10,6 +10,7 @@ from src.delm import DELM
 
 #TODO: something wrong with the layer to cnn matrix conversion - fix it
 #TODO: allow for K CNN kernels to be trained (not just 1)
+#TODO: extend CNN for 2d image layers
 
 def layer_to_cnn_matrix(layer:ndarray, window_size:int) -> ndarray:
     batch_size,layer_width = layer.shape

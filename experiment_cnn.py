@@ -8,10 +8,6 @@ from numpy.linalg import pinv
 from src.utils import Activation
 from src.delm import DELM
 
-#TODO: something wrong with the layer to cnn matrix conversion - fix it
-#TODO: allow for K CNN kernels to be trained (not just 1)
-#TODO: extend CNN for 2d image layers
-
 def layer_to_cnn_matrix(layer:ndarray, window_size:int) -> ndarray:
     batch_size,layer_width = layer.shape
     n_strides = layer_width-window_size+1
@@ -68,7 +64,7 @@ def cnn_forward(
     print(f"F: -->{[W.shape for W in Ws]}")
     for W in Ws:
         print("-->",Y_hat.shape)
-        _,window_size = W.shape
+        window_size,_ = W.shape
         Y_hat = layer_to_cnn_matrix(layer=Y_hat,window_size=window_size)
         print(".1.",Y_hat.shape)
         Y_hat = activation(Y_hat @ W)
@@ -83,13 +79,13 @@ for settings in (
     dict(
         name='breast cancer',
         load_data=load_breast_cancer,
-        h_dims=[15,3,6,10,100], #Final Layer must be larger than d_o and dense (not cnn).  Penultimate layer must be multiple of final layer (e.g. 99).  First layer must be same as d_i
+        h_dims=[9,10,100], #Final Layer must be larger than d_o and dense (not cnn).  Penultimate layer must be multiple of final layer (e.g. 99).  First layer must be same as d_i
         a=Activation.RELU
     ), 
     dict(
         name= 'digits',
         load_data=load_digits,
-        h_dims=[5,4,3],
+        h_dims=[9,10,100], #[(64, 18), (18, 100), (100, 10)] = [( d_i, 2*d_h1 ), (2*d_h1, d_h3), (d_h3,d_o)]
         a=Activation.RELU
     )
 ):
@@ -128,17 +124,5 @@ for settings in (
             axes[i].imshow(X[i].reshape((8,8)),cmap='gray')
         show()
 
-        y_hat = cnn.forward(X=X,Ws=cnn.Ws,activation=cnn.activation)
-        _, axes = subplots(1, 1, figsize=(15, 5)) 
-        axes.imshow(y_hat[:n_samples],cmap='gray')
-        show()
-
-        classifier_head = DELM(
-            input_dimension=y_hat.shape[1], output_dimension=d_o, 
-            hidden_dimensions=[300,200,100],
-            activation=settings['a']
-        )
-        classifier_head.fit(X=y_hat,Y=Y)
-        Y_hat = classifier_head.predict(X=y_hat)
-        accuracy_cnn = accuracy_score(Y, Y_hat)
-        print(accuracy_cnn)
+#TODO: allow for K CNN kernels to be trained (not just 1)
+#TODO: extend CNN for 2d image layers

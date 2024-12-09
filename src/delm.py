@@ -20,14 +20,14 @@ class DELM:
         self.dims = [input_dimension] + hidden_dimensions + [output_dimension]
         self.activation = activation_function(activation)
         self.inverse_activation = inverse_activation(activation) 
+        R = uniform(low=-0.1, high=0.1, size=(max(self.dims[:-1]), max(self.dims[1:])))
+        self.Ws = list(map(lambda d1,d2:R[:d1,:d2], self.dims[:-1],self.dims[1:]))
 
     def fit(self, X: ndarray, Y: ndarray) -> None:
         Y = one_hot_encode(class_ids=Y, n_classes=self.d_o)
-        R = uniform(low=-0.1, high=0.1, size=(max(self.dims[:-1]), max(self.dims[1:])))
-        randomly_initialised_weights = list(map(lambda d1,d2:R[:d1,:d2], self.dims[:-1],self.dims[1:]))
         self.Ws = self.finetune_weights(
             X=X,Y=Y,
-            Ws=randomly_initialised_weights,
+            Ws=self.Ws,
             dims=self.dims,activation=self.activation,
             inverse_activation=self.inverse_activation
         )

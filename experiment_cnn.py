@@ -43,13 +43,18 @@ def inverse_layer_to_cnn_matrix(cnn_matrix:ndarray) -> ndarray:
 
 def cnn_backward(Y:ndarray, Ws:list[ndarray], inverse_activation:callable) -> ndarray:
     Y_hat = Y
-    print("B")
-    for W in Ws[::-1]:
-        _,window_size = W.shape
-        Y_hat = inverse_cnn_matrix_to_layer(layer=Y_hat,window_size=window_size)
-        print("<--",Y_hat.shape)
+    print(f"B: {[W.shape for W in Ws]}<--")
+    for i,W in enumerate(Ws[::-1]):
+        if i: #final layer is dense - not CNN
+            print("<--",Y_hat.shape)
+            _,window_size = W.shape
+            Y_hat = inverse_cnn_matrix_to_layer(layer=Y_hat, window_size=window_size)
+            print(".1.",Y_hat.shape)
         Y_hat = inverse_activation(Y_hat) @ pinv(W) 
-        Y_hat = inverse_layer_to_cnn_matrix(cnn_matrix=Y_hat)
+        print("<-2-",Y_hat.shape)
+        if i:            
+            Y_hat = inverse_layer_to_cnn_matrix(cnn_matrix=Y_hat)
+            print(".3.",Y_hat.shape)
     print("<--",Y_hat.shape)
     return Y_hat
 
@@ -60,13 +65,16 @@ def cnn_forward(
     activation: callable,
 ) -> ndarray:
     Y_hat = X
-    print("F")
+    print(f"F: -->{[W.shape for W in Ws]}")
     for W in Ws:
-        window_size,_ = W.shape
-        Y_hat = layer_to_cnn_matrix(layer=Y_hat,window_size=window_size)
         print("-->",Y_hat.shape)
+        _,window_size = W.shape
+        Y_hat = layer_to_cnn_matrix(layer=Y_hat,window_size=window_size)
+        print(".1.",Y_hat.shape)
         Y_hat = activation(Y_hat @ W)
+        print("-2->",Y_hat.shape)
         Y_hat = cnn_matrix_to_layer(cnn_matrix=Y_hat)
+        print(".3.",Y_hat.shape)
     print("-->",Y_hat.shape)
     return Y_hat
 
@@ -75,7 +83,7 @@ for settings in (
     dict(
         name='breast cancer',
         load_data=load_breast_cancer,
-        h_dims=[5,4,3],
+        h_dims=[15,3,6,10,100], #Final Layer must be larger than d_o and dense (not cnn).  Penultimate layer must be multiple of final layer (e.g. 99).  First layer must be same as d_i
         a=Activation.RELU
     ), 
     dict(
@@ -92,6 +100,7 @@ for settings in (
 
     _, d_i = X.shape
     d_o = max(Y) + 1
+    print(d_i,d_o)
 
     cnn = DELM(
         input_dimension=d_i, output_dimension=d_o, 
@@ -100,6 +109,7 @@ for settings in (
     )
     cnn.forward = cnn_forward
     cnn.backward = cnn_backward
+    del cnn.Ws[-2]
     cnn.fit(X=X,Y=Y)
 
     Y_cnn = cnn.predict(X=X)

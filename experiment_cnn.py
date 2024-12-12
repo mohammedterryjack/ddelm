@@ -4,6 +4,7 @@ from sklearn.datasets import load_breast_cancer, load_digits
 from matplotlib.pyplot import subplots, show
 from sklearn.metrics import accuracy_score
 from numpy.linalg import pinv
+from numpy.random import uniform
 
 from src.utils import Activation
 from src.delm import DELM
@@ -37,40 +38,50 @@ def inverse_layer_to_cnn_matrix(cnn_matrix:ndarray) -> ndarray:
     return reconstructed_layer / overlap_count
 
 
-def cnn_backward(Y:ndarray, Ws:list[ndarray], inverse_activation:callable) -> ndarray:
+def cnn_backward(Y:ndarray, Ws:list[ndarray], inverse_activation:callable, dimensions:list[int]) -> ndarray:
     Y_hat = Y
     print(f"B: {[W.shape for W in Ws]}<--")
-    for i,W in enumerate(Ws[::-1]):
-        if i: #final layer is dense - not CNN
-            print("<--",Y_hat.shape)
-            _,window_size = W.shape
-            Y_hat = inverse_cnn_matrix_to_layer(layer=Y_hat, window_size=window_size)
+    for i,(W,d) in enumerate(zip(Ws[::-1],dimensions[::-1])):
+        print("<--",Y_hat.shape)
+        if i>1: #final 2 layers are dense - not CNN
+            Y_hat = inverse_cnn_matrix_to_layer(layer=Y_hat, window_size=d)
             print(".1.",Y_hat.shape)
-        Y_hat = inverse_activation(Y_hat) @ pinv(W) 
+        Y_hat = inverse_activation(Y_hat) @ pinv(W)   
         print("<-2-",Y_hat.shape)
-        if i:            
+        print(i, len(Ws))
+        if i==len(Ws)-1:
             Y_hat = inverse_layer_to_cnn_matrix(cnn_matrix=Y_hat)
             print(".3.",Y_hat.shape)
     print("<--",Y_hat.shape)
     return Y_hat
 
 
-def cnn_forward(
+def cnn_forward_train(
     X: ndarray,
     Ws: list[ndarray],
     activation: callable,
+    dimensions:list[int]
 ) -> ndarray:
-    Y_hat = X
     print(f"F: -->{[W.shape for W in Ws]}")
-    for W in Ws:
-        print("-->",Y_hat.shape)
-        window_size,_ = W.shape
-        Y_hat = layer_to_cnn_matrix(layer=Y_hat,window_size=window_size)
-        print(".1.",Y_hat.shape)
+    Y_hat = X
+    print("-->",Y_hat.shape)
+    Y_hat = layer_to_cnn_matrix(layer=Y_hat,window_size=dimensions[1])
+    print(".1.",Y_hat.shape)
+    for i,(W,d) in enumerate(zip(Ws[1:-1],dimensions[2:]),2):
         Y_hat = activation(Y_hat @ W)
         print("-2->",Y_hat.shape)
-        Y_hat = cnn_matrix_to_layer(cnn_matrix=Y_hat)
-        print(".3.",Y_hat.shape)
+        if i==len(Ws)-1:
+            Y_hat = cnn_matrix_to_layer(cnn_matrix=Y_hat)
+            print(".3.",Y_hat.shape)
+            #print("-->",Y_hat.shape)
+            #Y_hat = layer_to_cnn_matrix(layer=Y_hat,window_size=d)
+            #print(".1.",Y_hat.shape)
+            _,d1 = Y_hat.shape
+            d2 = dimensions[-2]
+            Wx = zeros((d1,d2))
+            Ws.insert(-1,Wx)
+            Y_hat = activation(Y_hat @ Wx)
+            print(".4.",Y_hat.shape)
     print("-->",Y_hat.shape)
     return Y_hat
 
@@ -79,16 +90,18 @@ for settings in (
     dict(
         name='breast cancer',
         load_data=load_breast_cancer,
-        h_dims=[9,10,100], #Final Layer must be larger than d_o and dense (not cnn).  Penultimate layer must be multiple of final layer (e.g. 99).  First layer must be same as d_i
+        h_dims=[3,5,100], #Final Layer must be larger than d_o and dense (not cnn).  Penultimate layer must be multiple of final layer (e.g. 99).  First layer must be same as d_i
         a=Activation.RELU
     ), 
     dict(
         name= 'digits',
         load_data=load_digits,
-        h_dims=[9,10,100], #[(64, 18), (18, 100), (100, 10)] = [( d_i, 2*d_h1 ), (2*d_h1, d_h3), (d_h3,d_o)]
+        h_dims=[9,10,100], #[(64, 9), (9, 10), (10, 100), (100, 10)] = [( d_i, d_h1 ), (d_h1, d_h2), (d_h2, d_h3), (d_h3, d_o)]
         a=Activation.RELU
     )
 ):
+    if settings['name'] == 'digits':
+        continue
     data = settings['load_data']()
 
     X = data.data
@@ -103,10 +116,25 @@ for settings in (
         hidden_dimensions=settings['h_dims'],
         activation=settings['a']
     )
-    cnn.forward = cnn_forward
-    cnn.backward = cnn_backward
+    #cnn_forward_inference = cnn.forward
+
+    cnn.forward = lambda X,Ws,activation : cnn_forward_train(
+        X=X,
+        Ws=Ws,
+        activation=activation,
+        dimensions=cnn.dims
+    )
+    cnn.backward = lambda Y,Ws,inverse_activation:cnn_backward(
+        Y=Y,
+        Ws=Ws,
+        inverse_activation=inverse_activation,
+        dimensions=cnn.dims
+    )
     del cnn.Ws[-2]
+    cnn.predict(X=X)
     cnn.fit(X=X,Y=Y)
+    #print("TRAINED")
+    #    cnn.forward = cnn_forward_inference
 
     Y_cnn = cnn.predict(X=X)
     accuracy_cnn = accuracy_score(Y, Y_cnn)
@@ -124,5 +152,6 @@ for settings in (
             axes[i].imshow(X[i].reshape((8,8)),cmap='gray')
         show()
 
+#TODO: allow for adjustable stride length
 #TODO: allow for K CNN kernels to be trained (not just 1)
 #TODO: extend CNN for 2d image layers

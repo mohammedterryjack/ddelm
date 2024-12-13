@@ -37,6 +37,36 @@ class CNN:
         R = uniform(low=-0.1, high=0.1, size=(max(d1s), max(d2s)))
         self.Whs = list(map(lambda d1,d2:R[:d1,:d2], d1s, d2s))
 
+
+    def predict(self, X: ndarray, multilabel_threshold:float|None=None) -> int:
+        Y_hat = self.forward_pass_cnn(X=X)
+        Y_hat = self.forward_pass_ffnn(X=Y_hat)
+        if multilabel_threshold is None:
+            return argmax(Y_hat, axis=1)
+        return where(Y_hat>multilabel_threshold)
+
+    def forward_pass_cnn(self,X: ndarray) -> ndarray:
+        Y_hat = X
+        for W in self.Wks:
+            window_size,_ = W.shape
+            Y_hat_cnn = self.forward_pass_ff_to_cnn_layer(
+                ff_layer=Y_hat, 
+                window_size=window_size, 
+                stride=self.stride
+            )
+            Y_hat_cnn = self.activation(Y_hat_cnn @ W)
+            Y_hat = self.forward_pass_cnn_to_ff_layer(
+                cnn_layer=Y_hat_cnn
+            )
+        return Y_hat
+
+    def forward_pass_ffnn(self, X: ndarray) -> ndarray:
+        Y_hat = X
+        for W in self.Whs:
+            Y_hat = self.activation(Y_hat @ W)
+        return Y_hat
+
+
     # def fit(self, X: ndarray, Y: ndarray) -> None:
     #     Y = one_hot_encode(class_ids=Y, n_classes=self.d_o)
     #     self.Ws = self.finetune_weights(
@@ -45,12 +75,6 @@ class CNN:
     #         dims=self.dims,activation=self.activation,
     #         inverse_activation=self.inverse_activation
     #     )
-
-    # def predict(self, X: ndarray, multilabel_threshold:float|None=None) -> int:
-    #     Y_hat = self.forward(X=X,Ws=self.Ws,activation=self.activation)
-    #     if multilabel_threshold is None:
-    #         return argmax(Y_hat, axis=1)
-    #     return where(Y_hat>multilabel_threshold)
 
     # def finetune_weights(
     #     self,
@@ -89,40 +113,6 @@ class CNN:
     #         Y_hat = inverse_activation(Y_hat) @ pinv(W) 
     #     return Y_hat
 
-
-    # @staticmethod
-    # def forward_pass_ffnn(
-    #     X: ndarray,
-    #     Ws: list[ndarray],
-    #     activation: callable,
-    # ) -> ndarray:
-    #     Y_hat = X
-    #     for W in Ws:
-    #         Y_hat = activation(Y_hat @ W)
-    #     return Y_hat
-
-
-    def forward_pass_cnn(
-        self,
-        X: ndarray,
-    ) -> ndarray:
-        Y_hat = X
-        for W in self.Wks:
-            print(Y_hat.shape)
-            window_size,_ = W.shape
-            Y_hat_cnn = self.forward_pass_ff_to_cnn_layer(
-                ff_layer=Y_hat, 
-                window_size=window_size, 
-                stride=self.stride
-            )
-            print(Y_hat_cnn.shape)
-            Y_hat_cnn = self.activation(Y_hat_cnn @ W)
-            print(Y_hat_cnn.shape)
-            Y_hat = self.forward_pass_cnn_to_ff_layer(
-                cnn_layer=Y_hat_cnn
-            )
-            print(Y_hat.shape)
-        return Y_hat
 
 
     @staticmethod

@@ -46,27 +46,42 @@ class CNN:
         return where(Y_hat>multilabel_threshold)
 
     def fit(self, X: ndarray, y: ndarray) -> None:
+        forward_pass = lambda layer:self.forward_pass_cnn(
+            X=X,
+            Ws=self.Wks[:layer],
+            activation=self.activation,
+            stride=self.stride
+        ) if layer < len(self.Wks) else self.forward_pass_ffnn(
+            X=self.forward_pass_cnn(
+                X=X,
+                Ws=self.Wks,
+                activation=self.activation,
+                stride=self.stride
+            ),
+            Ws=self.Whs[:layer-len(self.Wks)],
+            activation=self.activation,
+        )
+        backward_pass = lambda layer:self.backward_pass_cnn(
+            Y=self.backward_pass_ffnn(
+                Y=Y,
+                Ws=self.Whs,
+                inverse_activation=self.inverse_activation
+            ),
+            Ws=self.Wks[layer+1:],
+            inverse_activation=self.inverse_activation,
+            stride=self.stride
+        ) if layer < len(self.Wks) else self.backward_pass_ffnn(
+            Y=Y,
+            Ws=self.Whs[layer+1-len(self.Wks):],
+            inverse_activation=self.inverse_activation,
+        )
         Y = one_hot_encode(class_ids=y, n_classes=self.d_o)
-        n_cnn_layers = len(self.Wks)
-        n_ffnn_layers = len(self.Whs)
-        for i in range(n_cnn_layers+n_ffnn_layers-1):
-            forward_pass = self.forward_pass_cnn if i < n_cnn_layers else self.forward_pass_ffnn
-            backward_pass = self.backward_pass_cnn if i < n_cnn_layers else self.backward_pass_ffnn
-            #H = self.backward_pass_ffnn(Y=Y, Ws=self.Whs, inverse_activation=self.inverse_activation)
-            #X_hat = self.backward_pass_cnn(Y=H, Ws=self.Wks, stride=self.stride, inverse_activation=self.inverse_activation)
-            
-    #        Y_hat_next = self.backward(
-    #             Y=Y,
-    #             Ws=Ws[i+1:],
-    #             inverse_activation=inverse_activation
-    #         )
-    #         Y_hat = self.forward(
-    #             X=X,
-    #             Ws=Ws[:i],
-    #             activation=activation
-    #         )
-    #         Ws[i] = pinv(Y_hat) @ Y_hat_next
-    #     return Ws
+        Ws_finetuned = [
+            pinv(forward_pass(layer=layer_i)) @ backward_pass(layer=layer_i)
+            for layer_i in range(len(self.Wks)+len(self.Whs)-1)
+        ]  
+        self.Wks = Ws_finetuned[:len(self.Wks)]
+        self.Whs = Ws_finetuned[len(self.Wks):]        
 
     @staticmethod
     def forward_pass_cnn(X: ndarray, Ws:list[ndarray], stride:int, activation:callable) -> ndarray:
@@ -125,7 +140,6 @@ class CNN:
             
             ff_layer = divide(ff_layer, counts, where=(counts != 0))        
             return ff_layer
-
 
         Y_hat = Y
         for W in Ws[::-1]:

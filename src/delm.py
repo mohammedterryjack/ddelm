@@ -26,9 +26,11 @@ class DELM:
     def fit(self, X: ndarray, y: ndarray) -> None:
         Y = one_hot_encode(class_ids=y, n_classes=self.d_o)
         self.Ws = self.finetune_weights(
-            X=X,Y=Y,
+            X=X,
+            Y=Y,
             Ws=self.Ws,
-            dims=self.dims,activation=self.activation,
+            dims=self.dims,
+            activation=self.activation,
             inverse_activation=self.inverse_activation
         )
 

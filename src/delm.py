@@ -25,43 +25,24 @@ class DELM:
 
     def fit(self, X: ndarray, y: ndarray) -> None:
         Y = one_hot_encode(class_ids=y, n_classes=self.d_o)
-        self.Ws = self.finetune_weights(
-            X=X,
-            Y=Y,
-            Ws=self.Ws,
-            dims=self.dims,
-            activation=self.activation,
-            inverse_activation=self.inverse_activation
-        )
+        for i in range(len(self.Ws)-1):
+            Y_hat_next = self.backward(
+                Y=Y,
+                Ws=self.Ws[i+1:],
+                inverse_activation=self.inverse_activation
+            )
+            Y_hat = self.forward(
+                X=X,
+                Ws=self.Ws[:i],
+                activation=self.activation
+            )
+            self.Ws[i] = pinv(Y_hat) @ Y_hat_next
 
     def predict(self, X: ndarray, multilabel_threshold:float|None=None) -> int:
         Y_hat = self.forward(X=X,Ws=self.Ws,activation=self.activation)
         if multilabel_threshold is None:
             return argmax(Y_hat, axis=1)
         return where(Y_hat>multilabel_threshold)
-
-    def finetune_weights(
-        self,
-        X: ndarray,
-        Y: ndarray,
-        Ws: list[ndarray],
-        dims: list[int],
-        activation: callable,
-        inverse_activation: callable
-    ) -> list[ndarray]:
-        for i in range(len(Ws)-1):
-            Y_hat_next = self.backward(
-                Y=Y,
-                Ws=Ws[i+1:],
-                inverse_activation=inverse_activation
-            )
-            Y_hat = self.forward(
-                X=X,
-                Ws=Ws[:i],
-                activation=activation
-            )
-            Ws[i] = pinv(Y_hat) @ Y_hat_next
-        return Ws
     
     @staticmethod
     def backward(Y:ndarray, Ws:list[ndarray], inverse_activation:callable) -> ndarray:

@@ -46,6 +46,8 @@ class CNN:
         return where(Y_hat>multilabel_threshold)
 
     def fit(self, X: ndarray, y: ndarray) -> None:
+        Y = one_hot_encode(class_ids=y, n_classes=self.d_o)
+
         forward_pass = lambda layer:self.forward_pass_cnn(
             X=X,
             Ws=self.Wks[:layer],
@@ -75,13 +77,15 @@ class CNN:
             Ws=self.Whs[layer+1-len(self.Wks):],
             inverse_activation=self.inverse_activation,
         )
-        Y = one_hot_encode(class_ids=y, n_classes=self.d_o)
-        Ws_finetuned = [
-            pinv(forward_pass(layer=layer_i)) @ backward_pass(layer=layer_i)
-            for layer_i in range(len(self.Wks)+len(self.Whs)-1)
-        ]  
-        self.Wks = Ws_finetuned[:len(self.Wks)]
-        self.Whs = Ws_finetuned[len(self.Wks):]        
+
+        for layer_i in range(len(self.Wks)+len(self.Whs)-1):
+            Y_hat_next = backward_pass(layer=layer_i)
+            Y_hat = forward_pass(layer=layer_i)
+            W = pinv(Y_hat) @ Y_hat_next
+            if layer_i < len(self.Wks):
+                self.Wks[layer_i] = W 
+            else:
+                self.Whs[layer_i-len(self.Wks)] = W
 
     @staticmethod
     def forward_pass_cnn(X: ndarray, Ws:list[ndarray], stride:int, activation:callable) -> ndarray:

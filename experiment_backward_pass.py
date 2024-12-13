@@ -25,7 +25,7 @@ for a in Activation:
         hidden_dimensions=[100],
         activation=a
     )
-    delm.fit(X=X, Y=Y)
+    delm.fit(X=X, y=Y)
 
     y_hat = delm.forward(X=X_test,Ws=delm.Ws,activation=delm.activation)
     _, axes = subplots(1, 3, figsize=(15, 5)) 

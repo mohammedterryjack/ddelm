@@ -20,8 +20,8 @@ class ELM:
         self.d_o = output_dimension
         self.a = activation_function(activation)
 
-    def fit(self, X: ndarray, Y: ndarray) -> None:
-        Y = one_hot_encode(class_ids=Y, n_classes=self.d_o)
+    def fit(self, X: ndarray, y: ndarray) -> None:
+        Y = one_hot_encode(class_ids=y, n_classes=self.d_o)
         self.W = self.fit_single_layer(X=X, Y=Y, R=self.R, activation=self.a)
 
     def predict(self, X: ndarray, multilabel_threshold:float|None=None) -> int:

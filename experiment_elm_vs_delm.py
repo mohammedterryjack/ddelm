@@ -27,8 +27,8 @@ delm = DELM(
     activation=Activation.SIN
 )
 
-elm.fit(X=X, Y=Y)
-delm.fit(X=X, Y=Y)
+elm.fit(X=X, y=Y)
+delm.fit(X=X, y=Y)
 
 Y_elm = elm.predict(X=X)
 Y_delm = delm.predict(X=X)
@@ -63,8 +63,8 @@ for h_dim in h_dims:
         activation=Activation.SIN
     )
 
-    elm.fit(X=X, Y=Y)
-    delm.fit(X=X, Y=Y)
+    elm.fit(X=X, y=Y)
+    delm.fit(X=X, y=Y)
 
     Y_elm = elm.predict(X=X)
     Y_delm = delm.predict(X=X)

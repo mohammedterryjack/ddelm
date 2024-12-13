@@ -45,8 +45,13 @@ class CNN:
             return argmax(Y_hat, axis=1)
         return where(Y_hat>multilabel_threshold)
 
-    # def fit(self, X: ndarray, Y: ndarray) -> None:
-    #     Y = one_hot_encode(class_ids=Y, n_classes=self.d_o)
+    def fit(self, X: ndarray, y: ndarray) -> None:
+        Y = one_hot_encode(class_ids=y, n_classes=self.d_o)
+        H = self.backward_pass_ffnn(Y=Y)
+        print(H.shape)
+        X_hat = self.backward_pass_cnn(Y=H)
+        print(X_hat.shape)
+        print(X.shape)
     #     self.Ws = self.finetune_weights(
     #         X=X,Y=Y,
     #         Ws=self.Ws,
@@ -150,6 +155,3 @@ class CNN:
         return ff_layer
 
 
-
-#TODO: allow for K CNN kernels to be trained (not just 1)
-#TODO: extend CNN for 2d image layers

@@ -22,13 +22,13 @@ delm = DELM(
     hidden_dimensions=[10,5,6,8],
     activation=Activation.RELU
 )
-delm.fit(X=X, Y=Y)
+delm.fit(X=X, y=Y)
 
 Y_hat = delm.predict(X=X_test)
 y_predicted = one_hot_encode(class_ids=Y_hat, n_classes=d_o)
 
 subscripts = ["₀","₁","₂","₃","₄","₅","₆","₇","₈","₉"]
-_, axes = subplots(1, 2*len(delm.Ws)+2, figsize=(15, 5), sharex=True) 
+_, axes = subplots(1, 2*len(delm.Ws)+2, figsize=(15, 5)) 
 for i in range(len(delm.Ws)):
     j = 2*i
     Y_hat = delm.forward(

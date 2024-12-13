@@ -38,7 +38,7 @@ for dataset in (
             hidden_dimension=dataset['elm_dimensions'],
             activation=a
         )
-        elm.fit(X=X_train, Y=Y_train)
+        elm.fit(X=X_train, y=Y_train)
         for i, W in enumerate([elm.R,elm.W]):
             ax = elm_axes[j,i]
             ax.imshow(W)  
@@ -55,7 +55,7 @@ for dataset in (
             hidden_dimensions=dataset['delm_dimensions'],
             activation=a
         )
-        delm.fit(X=X_train, Y=Y_train)
+        delm.fit(X=X_train, y=Y_train)
         for i, W in enumerate(delm.Ws):
             ax = delm_axes[j,i]
             ax.imshow(W)  

@@ -17,5 +17,5 @@ cnn = CNN(
     stride=1,
     activation=Activation.RELU
 )
+cnn.fit(X=X,y=Y)
 Y_hat = cnn.predict(X=X)
-print(Y_hat)

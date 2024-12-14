@@ -6,13 +6,14 @@ from numpy.linalg import pinv
 
 from src.utils import one_hot_encode, Activation, activation_function
 
+
 class ELM:
     def __init__(
         self,
         input_dimension: int,
         output_dimension: int,
         hidden_dimension: int,
-        activation: Activation
+        activation: Activation,
     ) -> None:
         seed(42)
 
@@ -24,11 +25,11 @@ class ELM:
         Y = one_hot_encode(class_ids=y, n_classes=self.d_o)
         self.W = self.fit_single_layer(X=X, Y=Y, R=self.R, activation=self.a)
 
-    def predict(self, X: ndarray, multilabel_threshold:float|None=None) -> int:
+    def predict(self, X: ndarray, multilabel_threshold: float | None = None) -> int:
         Y_hat = self.transform_single_layer(X=X, R=self.R, W=self.W, activation=self.a)
         if multilabel_threshold is None:
             return argmax(Y_hat, axis=1)
-        return where(Y_hat>multilabel_threshold)
+        return where(Y_hat > multilabel_threshold)
 
     @staticmethod
     def fit_single_layer(

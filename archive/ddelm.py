@@ -13,7 +13,7 @@ class DDELM:
         input_dimension: int,
         hidden_dimensions: list[int],
         output_dimension: int,
-        activation_function: callable = sigmoid#relu
+        activation_function: callable = sigmoid,  # relu
     ) -> None:
         seed(42)
         largest_dimension = max(
@@ -36,7 +36,6 @@ class DDELM:
             layer_dimensions=[self.d_i] + self.d_hs,
             activation=self.a,
         )
-
 
     def predict(self, X: ndarray) -> int:
         Y_hat = self.transform_multi_layered(

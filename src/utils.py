@@ -1,45 +1,49 @@
 from enum import Enum
 
 from numpy import (
-    ndarray, 
-    zeros, 
-    maximum, 
+    ndarray,
+    zeros,
+    maximum,
     sin,
     arcsin,
     nan_to_num,
     cos,
     arccos,
     tan,
-    arctan
+    arctan,
 )
 from scipy.fft import dct, idct
 
+
 class Activation(Enum):
-    IDENTITY="identity"
-    SIN="sine"
+    IDENTITY = "identity"
+    SIN = "sine"
     COS = "cosine"
     TAN = "tan"
-    RELU="rectified linear unit"
-    CT="cosine transform" 
+    RELU = "rectified linear unit"
+    CT = "cosine transform"
 
-def activation_function(activation:Activation) -> callable:
+
+def activation_function(activation: Activation) -> callable:
     return {
-        Activation.IDENTITY:lambda x:x,
-        Activation.RELU:lambda x:maximum(0, x),
-        Activation.SIN:sin,
-        Activation.COS:cos,
-        Activation.TAN:tan,
-        Activation.CT:dct
+        Activation.IDENTITY: lambda x: x,
+        Activation.RELU: lambda x: maximum(0, x),
+        Activation.SIN: sin,
+        Activation.COS: cos,
+        Activation.TAN: tan,
+        Activation.CT: dct,
     }[activation]
 
-def inverse_activation(activation:Activation) -> callable:
+
+def inverse_activation(activation: Activation) -> callable:
     f = {
-        Activation.SIN:arcsin,
-        Activation.COS:arccos,
-        Activation.TAN:arctan,
-        Activation.CT:idct,
-    }.get(activation, lambda x:x)
-    return lambda x:nan_to_num(f(x),nan=0.0)
+        Activation.SIN: arcsin,
+        Activation.COS: arccos,
+        Activation.TAN: arctan,
+        Activation.CT: idct,
+    }.get(activation, lambda x: x)
+    return lambda x: nan_to_num(f(x), nan=0.0)
+
 
 def one_hot_encode(class_ids: list[int], n_classes: int) -> ndarray:
     n_samples = len(class_ids)

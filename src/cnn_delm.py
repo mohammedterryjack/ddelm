@@ -24,25 +24,27 @@ class CNN:
         activation: Activation,
     ) -> None:
         seed(42)
-        self.stride = stride
-        self.d_i = input_dimension
-        self.d_ks = kernel_sizes
-        self.d_o = output_dimension
         self.activation = activation_function(activation)
         self.inverse_activation = inverse_activation(activation)
-        d1s, d2s = zip(*kernel_sizes)
-        R = uniform(low=-0.1, high=0.1, size=(max(d1s), max(d2s)))
-        self.Wks = list(map(lambda ds: R[: ds[0], : ds[1]], self.d_ks))
+        self.stride = stride
+        self.d_i = input_dimension
+        self.d_o = output_dimension
+        self.__initialise_weights(
+            hidden_dimensions=hidden_dimensions, kernel_dimensions=kernel_sizes
+        )
+
+    def __initialise_weights(
+        self, hidden_dimensions: list[int], kernel_dimensions: list[tuple[int, int]]
+    ) -> None:
+        self.Wks = self.__initialise_cnn_weights(kernel_dimensions=kernel_dimensions)
         X_fake = uniform(low=-0.1, high=0.1, size=(1, self.d_i))
         Yk_final = self.forward_pass_cnn(
             X=X_fake, Ws=self.Wks, activation=self.activation, stride=self.stride
         )
         _, dk_final = Yk_final.shape
-        self.dhs = [dk_final] + hidden_dimensions + [output_dimension]
-        d1s = self.dhs[:-1]
-        d2s = self.dhs[1:]
-        R = uniform(low=-0.1, high=0.1, size=(max(d1s), max(d2s)))
-        self.Whs = list(map(lambda d1, d2: R[:d1, :d2], d1s, d2s))
+        self.Whs = self.__initialise_ffnn_weights(
+            dimensions=[dk_final] + hidden_dimensions + [self.d_o]
+        )
 
     def predict(self, X: ndarray, multilabel_threshold: float | None = None) -> int:
         Y_hat = self.forward_pass_cnn(
@@ -198,3 +200,18 @@ class CNN:
     def forward_pass_cnn_to_ff_layer(cnn_layer: ndarray) -> ndarray:
         batch_size, n_strides, window_size = cnn_layer.shape
         return cnn_layer.reshape(batch_size, n_strides * window_size)
+
+    @staticmethod
+    def __initialise_ffnn_weights(dimensions: list[int]) -> list[ndarray]:
+        d1s = dimensions[:-1]
+        d2s = dimensions[1:]
+        R = uniform(low=-0.1, high=0.1, size=(max(d1s), max(d2s)))
+        return list(map(lambda d1, d2: R[:d1, :d2], d1s, d2s))
+
+    @staticmethod
+    def __initialise_cnn_weights(
+        kernel_dimensions: list[tuple[int, int]]
+    ) -> list[ndarray]:
+        d1s, d2s = zip(*kernel_dimensions)
+        R = uniform(low=-0.1, high=0.1, size=(max(d1s), max(d2s)))
+        return list(map(lambda ds: R[: ds[0], : ds[1]], kernel_dimensions))

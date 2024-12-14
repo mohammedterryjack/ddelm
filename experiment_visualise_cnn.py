@@ -3,7 +3,7 @@ from sklearn.metrics import accuracy_score
 
 from src.utils import Activation
 from src.cnn_delm import CNN
-
+from src.visualisations import display_forward_pass_cnn
 
 data = load_digits()
 X = data.data
@@ -20,6 +20,10 @@ cnn = CNN(
     activation=Activation.RELU,
 )
 cnn.fit(X=X, y=Y)
+display_forward_pass_cnn(
+    X=X[:100],Y=Y[:100],model=cnn
+)
+
 Y_cnn = cnn.predict(X=X)
 
 accuracy_cnn = accuracy_score(Y, Y_cnn)

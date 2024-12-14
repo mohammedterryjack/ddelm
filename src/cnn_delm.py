@@ -1,6 +1,6 @@
 """Convolutional Neural Network (CNN) variation of Deep Extreme Learning Machine (DELM)"""
 
-from numpy import ndarray, argmax, where, zeros, divide
+from numpy import ndarray, argmax, where, zeros, divide, mean
 from numpy.random import seed, uniform
 from numpy.linalg import pinv
 from numpy.lib.stride_tricks import as_strided
@@ -30,11 +30,10 @@ class CNN:
         self.d_o = output_dimension
         self.activation = activation_function(activation)
         self.inverse_activation = inverse_activation(activation)
-        batch_size_fake = 1
         d1s, d2s = zip(*kernel_sizes)
-        R = uniform(low=-0.1, high=0.1, size=(batch_size_fake, max(d1s), max(d2s)))
-        self.Wks = list(map(lambda ds: R[:, : ds[0], : ds[1]], self.d_ks))
-        X_fake = uniform(low=-0.1, high=0.1, size=(batch_size_fake, self.d_i))
+        R = uniform(low=-0.1, high=0.1, size=(max(d1s), max(d2s)))
+        self.Wks = list(map(lambda ds: R[: ds[0], : ds[1]], self.d_ks))
+        X_fake = uniform(low=-0.1, high=0.1, size=(1, self.d_i))
         Yk_final = self.forward_pass_cnn(
             X=X_fake, Ws=self.Wks, activation=self.activation, stride=self.stride
         )
@@ -65,7 +64,7 @@ class CNN:
                     activation=self.activation,
                     stride=self.stride,
                 ),
-                window_size=self.Wks[layer].shape[1],
+                window_size=self.Wks[layer].shape[0],
                 stride=self.stride,
             )
             if layer < len(self.Wks)
@@ -92,7 +91,7 @@ class CNN:
                     inverse_activation=self.inverse_activation,
                     stride=self.stride,
                 ),
-                window_size=self.Wks[layer].shape[2],
+                window_size=self.Wks[layer].shape[1],
             )
             if layer < len(self.Wks)
             else self.backward_pass_ffnn(
@@ -102,12 +101,12 @@ class CNN:
             )
         )
 
-        for layer_i in range(1, len(self.Wks) + len(self.Whs) - 1):
+        for layer_i in range(len(self.Wks) + len(self.Whs) - 1):
             Y_hat = forward_pass(layer=layer_i)
             Y_hat_next = backward_pass(layer=layer_i)
             W = pinv(Y_hat) @ Y_hat_next
             if layer_i < len(self.Wks):
-                self.Wks[layer_i] = W
+                self.Wks[layer_i] = mean(W, axis=0)
             else:
                 self.Whs[layer_i - len(self.Wks)] = W
 
@@ -120,7 +119,7 @@ class CNN:
     ) -> ndarray:
         Y_hat = X
         for W in Ws:
-            _, window_size, _ = W.shape
+            window_size, _ = W.shape
             Y_hat_cnn = CNN.forward_pass_ff_to_cnn_layer(
                 ff_layer=Y_hat, window_size=window_size, stride=stride
             )
@@ -143,7 +142,7 @@ class CNN:
     ) -> ndarray:
         Y_hat = Y
         for W in Ws[::-1]:
-            _, _, window_size = W.shape
+            _, window_size = W.shape
             Y_hat_cnn = CNN.backward_pass_cnn_to_ff_layer(
                 ff_layer=Y_hat, window_size=window_size
             )

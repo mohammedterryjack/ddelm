@@ -22,7 +22,7 @@ cnn = CNN(
 # print([W.shape for W in cnn.Wks + cnn.Whs])
 cnn.fit(X=X, y=Y)
 # print([W.shape for W in cnn.Wks + cnn.Whs])
-display_forward_pass_cnn(X=X, Y=Y, model=cnn)  # TODO: fix so can use new batch_size
+display_forward_pass_cnn(X=X[:100], Y=Y[:100], model=cnn)
 
 Y_cnn = cnn.predict(X=X)
 

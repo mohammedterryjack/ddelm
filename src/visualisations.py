@@ -30,7 +30,7 @@ def display_forward_pass_cnn(model: CNN, X: ndarray, Y: ndarray) -> None:
     _, axes = subplots(
         2,
         2 * (len(model.Wks) + len(model.Whs)) + 2,
-        subplot_kw={"projection": "3d"},
+        # subplot_kw={"projection": "3d"},
         figsize=(15, 5),
     )
 
@@ -46,10 +46,8 @@ def display_forward_pass_cnn(model: CNN, X: ndarray, Y: ndarray) -> None:
             if j == 0
             else f"Ŷ{SUBSCRIPTS[i]} = H{SUBSCRIPTS[i]}"
         )
-        if i < len(model.Wks):
-            axes[0, j + 1].voxels(W)
-        else:
-            axes[0, j + 1].imshow(W, cmap="inferno")
+        # axes[0, j + 1].voxels(W)
+        axes[0, j + 1].imshow(W, cmap="inferno")
         axes[0, j + 1].set_title(
             "Wᵢₙ" if i == 0 else "Wₒᵤₜ" if i == n_layers - 1 else f"W{SUBSCRIPTS[i]}"
         )

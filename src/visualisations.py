@@ -7,11 +7,11 @@ from src.utils import one_hot_encode
 
 SUBSCRIPTS = ["₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉"]
 
-def display_forward_pass_cnn(model: CNN, X:ndarray, Y:ndarray) -> None:
+
+def display_forward_pass_cnn(model: CNN, X: ndarray, Y: ndarray) -> None:
 
     y_expected = one_hot_encode(class_ids=Y, n_classes=model.d_o)
     y_predicted = one_hot_encode(class_ids=model.predict(X=X), n_classes=model.d_o)
-
 
     forward_pass = lambda layer: (
         model.forward_pass_cnn(
@@ -27,29 +27,35 @@ def display_forward_pass_cnn(model: CNN, X:ndarray, Y:ndarray) -> None:
         )
     )
 
-    _, axes = subplots(2, 2 * (len(model.Wks)+len(model.Whs)) + 2, figsize=(15, 5))
-    
+    _, axes = subplots(
+        2,
+        2 * (len(model.Wks) + len(model.Whs)) + 2,
+        subplot_kw={"projection": "3d"},
+        figsize=(15, 5),
+    )
+
     n_layers = len(model.Wks) + len(model.Whs)
     for i in range(n_layers - 1):
         W = model.Wks[i] if i < len(model.Wks) else model.Whs[i - len(model.Wks)]
         Y_hat = forward_pass(layer=i)
 
         j = 2 * i
-        axes[0,j].imshow(Y_hat, cmap="pink")
-        axes[0,j].set_title(
+        axes[0, j].imshow(Y_hat, cmap="pink")
+        axes[0, j].set_title(
             f"Ŷ{SUBSCRIPTS[i]} = X"
             if j == 0
             else f"Ŷ{SUBSCRIPTS[i]} = H{SUBSCRIPTS[i]}"
         )
-        axes[0,j + 1].imshow(W, cmap="inferno")
-        axes[0,j + 1].set_title(
-            "Wᵢₙ"
-            if i == 0
-            else "Wₒᵤₜ" if i == n_layers - 1 else f"W{SUBSCRIPTS[i]}"
+        if i < len(model.Wks):
+            axes[0, j + 1].voxels(W)
+        else:
+            axes[0, j + 1].imshow(W, cmap="inferno")
+        axes[0, j + 1].set_title(
+            "Wᵢₙ" if i == 0 else "Wₒᵤₜ" if i == n_layers - 1 else f"W{SUBSCRIPTS[i]}"
         )
 
-        box1 = axes[0,j + 1].get_position()
-        box2 = axes[0,j + 2].get_position()
+        box1 = axes[0, j + 1].get_position()
+        box2 = axes[0, j + 2].get_position()
 
         annotate(
             "α",
@@ -59,6 +65,7 @@ def display_forward_pass_cnn(model: CNN, X:ndarray, Y:ndarray) -> None:
             arrowprops=dict(arrowstyle="->", color="red", lw=1),
         )
     show()
+
 
 def display_forward_pass_ffnn(model: DELM, X: ndarray, Y: ndarray) -> None:
 

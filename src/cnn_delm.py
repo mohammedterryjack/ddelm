@@ -30,10 +30,11 @@ class CNN:
         self.d_o = output_dimension
         self.activation = activation_function(activation)
         self.inverse_activation = inverse_activation(activation)
+        batch_size_fake = 1
         d1s, d2s = zip(*kernel_sizes)
-        R = uniform(low=-0.1, high=0.1, size=(max(d1s), max(d2s)))
-        self.Wks = list(map(lambda ds: R[: ds[0], : ds[1]], self.d_ks))
-        X_fake = uniform(low=-0.1, high=0.1, size=(1, self.d_i))
+        R = uniform(low=-0.1, high=0.1, size=(batch_size_fake, max(d1s), max(d2s)))
+        self.Wks = list(map(lambda ds: R[:, : ds[0], : ds[1]], self.d_ks))
+        X_fake = uniform(low=-0.1, high=0.1, size=(batch_size_fake, self.d_i))
         Yk_final = self.forward_pass_cnn(
             X=X_fake, Ws=self.Wks, activation=self.activation, stride=self.stride
         )
@@ -59,15 +60,21 @@ class CNN:
         forward_pass = lambda layer: (
             self.forward_pass_ff_to_cnn_layer(
                 ff_layer=self.forward_pass_cnn(
-                    X=X, Ws=self.Wks[:layer], activation=self.activation, stride=self.stride, 
-                ), 
-                window_size=self.Wks[layer].shape[0], 
-                stride=self.stride
+                    X=X,
+                    Ws=self.Wks[:layer],
+                    activation=self.activation,
+                    stride=self.stride,
+                ),
+                window_size=self.Wks[layer].shape[1],
+                stride=self.stride,
             )
             if layer < len(self.Wks)
             else self.forward_pass_ffnn(
                 X=self.forward_pass_cnn(
-                    X=X, Ws=self.Wks, activation=self.activation, stride=self.stride,
+                    X=X,
+                    Ws=self.Wks,
+                    activation=self.activation,
+                    stride=self.stride,
                 ),
                 Ws=self.Whs[: layer - len(self.Wks)],
                 activation=self.activation,
@@ -77,13 +84,15 @@ class CNN:
             self.backward_pass_cnn_to_ff_layer(
                 ff_layer=self.backward_pass_cnn(
                     Y=self.backward_pass_ffnn(
-                        Y=Y, Ws=self.Whs, inverse_activation=self.inverse_activation,
+                        Y=Y,
+                        Ws=self.Whs,
+                        inverse_activation=self.inverse_activation,
                     ),
                     Ws=self.Wks[layer + 1 :],
                     inverse_activation=self.inverse_activation,
                     stride=self.stride,
-                ), 
-                window_size=self.Wks[layer].shape[1]
+                ),
+                window_size=self.Wks[layer].shape[2],
             )
             if layer < len(self.Wks)
             else self.backward_pass_ffnn(
@@ -93,12 +102,10 @@ class CNN:
             )
         )
 
-        for layer_i in range(1,len(self.Wks) + len(self.Whs) - 1):
+        for layer_i in range(1, len(self.Wks) + len(self.Whs) - 1):
             Y_hat = forward_pass(layer=layer_i)
             Y_hat_next = backward_pass(layer=layer_i)
-            print("W_unfit",self.Wks[layer_i].shape if layer_i < len(self.Wks) else self.Whs[layer_i - len(self.Wks)].shape, "Y_prev",Y_hat.shape, "Y_next",Y_hat_next.shape)
             W = pinv(Y_hat) @ Y_hat_next
-            print("W_fit",W.shape, "Y_prev",Y_hat.shape, "Y_next",Y_hat_next.shape)
             if layer_i < len(self.Wks):
                 self.Wks[layer_i] = W
             else:
@@ -106,23 +113,19 @@ class CNN:
 
     @staticmethod
     def forward_pass_cnn(
-        X: ndarray, Ws: list[ndarray], stride: int, activation: callable, 
+        X: ndarray,
+        Ws: list[ndarray],
+        stride: int,
+        activation: callable,
     ) -> ndarray:
         Y_hat = X
-        print("-->")
         for W in Ws:
-            print("W",W.shape)
-            print("Y_hat",Y_hat.shape)
-            window_size, _ = W.shape
+            _, window_size, _ = W.shape
             Y_hat_cnn = CNN.forward_pass_ff_to_cnn_layer(
                 ff_layer=Y_hat, window_size=window_size, stride=stride
             )
-            print("Y_hat",Y_hat_cnn.shape)
             Y_hat_cnn = activation(Y_hat_cnn @ W)
-            print("Y_hat",Y_hat_cnn.shape)
             Y_hat = CNN.forward_pass_cnn_to_ff_layer(cnn_layer=Y_hat_cnn)
-            print(f"Y_hat",Y_hat.shape)
-        print("---")
         return Y_hat
 
     @staticmethod
@@ -139,20 +142,15 @@ class CNN:
         Y: ndarray, Ws: list[ndarray], stride: int, inverse_activation: callable
     ) -> ndarray:
         Y_hat = Y
-        print("<--")
         for W in Ws[::-1]:
-            print("W",W.shape)
-            _, window_size = W.shape
-            print("Y_hat",Y_hat.shape)
+            _, _, window_size = W.shape
             Y_hat_cnn = CNN.backward_pass_cnn_to_ff_layer(
                 ff_layer=Y_hat, window_size=window_size
             )
-            print("Y_hat",Y_hat_cnn.shape)
             Y_hat_cnn = inverse_activation(Y_hat_cnn) @ pinv(W)
-            print("Y_hat",Y_hat_cnn.shape)
-            Y_hat = CNN.backward_pass_ff_to_cnn_layer(cnn_layer=Y_hat_cnn, stride=stride)
-            print(f"Y_hat",Y_hat.shape)
-        print("---")
+            Y_hat = CNN.backward_pass_ff_to_cnn_layer(
+                cnn_layer=Y_hat_cnn, stride=stride
+            )
         return Y_hat
 
     @staticmethod
@@ -165,9 +163,7 @@ class CNN:
         return Y_hat
 
     @staticmethod
-    def backward_pass_cnn_to_ff_layer(
-        ff_layer: ndarray, window_size: int
-    ) -> ndarray:
+    def backward_pass_cnn_to_ff_layer(ff_layer: ndarray, window_size: int) -> ndarray:
         batch_size, layer_size = ff_layer.shape
         return ff_layer.reshape(batch_size, layer_size // window_size, window_size)
 

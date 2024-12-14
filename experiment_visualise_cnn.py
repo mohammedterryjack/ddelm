@@ -19,7 +19,9 @@ cnn = CNN(
     stride=1,
     activation=Activation.RELU,
 )
+#print([W.shape for W in cnn.Wks + cnn.Whs])
 cnn.fit(X=X, y=Y)
+#print([W.shape for W in cnn.Wks + cnn.Whs])
 display_forward_pass_cnn(
     X=X[:100],Y=Y[:100],model=cnn
 )

@@ -57,26 +57,33 @@ class CNN:
         Y = one_hot_encode(class_ids=y, n_classes=self.d_o)
 
         forward_pass = lambda layer: (
-            self.forward_pass_cnn(
-                X=X, Ws=self.Wks[:layer], activation=self.activation, stride=self.stride
+            self.forward_pass_ff_to_cnn_layer(
+                ff_layer=self.forward_pass_cnn(
+                    X=X, Ws=self.Wks[:layer], activation=self.activation, stride=self.stride, 
+                ), 
+                window_size=self.Wks[layer].shape[0], 
+                stride=self.stride
             )
             if layer < len(self.Wks)
             else self.forward_pass_ffnn(
                 X=self.forward_pass_cnn(
-                    X=X, Ws=self.Wks, activation=self.activation, stride=self.stride
+                    X=X, Ws=self.Wks, activation=self.activation, stride=self.stride,
                 ),
                 Ws=self.Whs[: layer - len(self.Wks)],
                 activation=self.activation,
             )
         )
         backward_pass = lambda layer: (
-            self.backward_pass_cnn(
-                Y=self.backward_pass_ffnn(
-                    Y=Y, Ws=self.Whs, inverse_activation=self.inverse_activation
-                ),
-                Ws=self.Wks[layer + 1 :],
-                inverse_activation=self.inverse_activation,
-                stride=self.stride,
+            self.backward_pass_cnn_to_ff_layer(
+                ff_layer=self.backward_pass_cnn(
+                    Y=self.backward_pass_ffnn(
+                        Y=Y, Ws=self.Whs, inverse_activation=self.inverse_activation,
+                    ),
+                    Ws=self.Wks[layer + 1 :],
+                    inverse_activation=self.inverse_activation,
+                    stride=self.stride,
+                ), 
+                window_size=self.Wks[layer].shape[1]
             )
             if layer < len(self.Wks)
             else self.backward_pass_ffnn(
@@ -86,10 +93,12 @@ class CNN:
             )
         )
 
-        for layer_i in range(len(self.Wks) + len(self.Whs) - 1):
-            Y_hat_next = backward_pass(layer=layer_i)
+        for layer_i in range(1,len(self.Wks) + len(self.Whs) - 1):
             Y_hat = forward_pass(layer=layer_i)
+            Y_hat_next = backward_pass(layer=layer_i)
+            print("W_unfit",self.Wks[layer_i].shape if layer_i < len(self.Wks) else self.Whs[layer_i - len(self.Wks)].shape, "Y_prev",Y_hat.shape, "Y_next",Y_hat_next.shape)
             W = pinv(Y_hat) @ Y_hat_next
+            print("W_fit",W.shape, "Y_prev",Y_hat.shape, "Y_next",Y_hat_next.shape)
             if layer_i < len(self.Wks):
                 self.Wks[layer_i] = W
             else:
@@ -97,16 +106,23 @@ class CNN:
 
     @staticmethod
     def forward_pass_cnn(
-        X: ndarray, Ws: list[ndarray], stride: int, activation: callable
+        X: ndarray, Ws: list[ndarray], stride: int, activation: callable, 
     ) -> ndarray:
         Y_hat = X
+        print("-->")
         for W in Ws:
+            print("W",W.shape)
+            print("Y_hat",Y_hat.shape)
             window_size, _ = W.shape
             Y_hat_cnn = CNN.forward_pass_ff_to_cnn_layer(
                 ff_layer=Y_hat, window_size=window_size, stride=stride
             )
+            print("Y_hat",Y_hat_cnn.shape)
             Y_hat_cnn = activation(Y_hat_cnn @ W)
+            print("Y_hat",Y_hat_cnn.shape)
             Y_hat = CNN.forward_pass_cnn_to_ff_layer(cnn_layer=Y_hat_cnn)
+            print(f"Y_hat",Y_hat.shape)
+        print("---")
         return Y_hat
 
     @staticmethod
@@ -123,13 +139,20 @@ class CNN:
         Y: ndarray, Ws: list[ndarray], stride: int, inverse_activation: callable
     ) -> ndarray:
         Y_hat = Y
+        print("<--")
         for W in Ws[::-1]:
+            print("W",W.shape)
             _, window_size = W.shape
+            print("Y_hat",Y_hat.shape)
             Y_hat_cnn = CNN.backward_pass_cnn_to_ff_layer(
                 ff_layer=Y_hat, window_size=window_size
             )
+            print("Y_hat",Y_hat_cnn.shape)
             Y_hat_cnn = inverse_activation(Y_hat_cnn) @ pinv(W)
+            print("Y_hat",Y_hat_cnn.shape)
             Y_hat = CNN.backward_pass_ff_to_cnn_layer(cnn_layer=Y_hat_cnn, stride=stride)
+            print(f"Y_hat",Y_hat.shape)
+        print("---")
         return Y_hat
 
     @staticmethod

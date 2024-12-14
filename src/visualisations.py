@@ -12,28 +12,28 @@ def display_forward_pass_cnn(model: CNN, X:ndarray, Y:ndarray) -> None:
     y_expected = one_hot_encode(class_ids=Y, n_classes=model.d_o)
     y_predicted = one_hot_encode(class_ids=model.predict(X=X), n_classes=model.d_o)
 
+
+    forward_pass = lambda layer: (
+        model.forward_pass_cnn(
+            X=X, Ws=model.Wks[:layer], activation=model.activation, stride=model.stride
+        )
+        if layer < len(model.Wks)
+        else model.forward_pass_ffnn(
+            X=model.forward_pass_cnn(
+                X=X, Ws=model.Wks, activation=model.activation, stride=model.stride
+            ),
+            Ws=model.Whs[: layer - len(model.Wks)],
+            activation=model.activation,
+        )
+    )
+
     _, axes = subplots(2, 2 * (len(model.Wks)+len(model.Whs)) + 2, figsize=(15, 5))
     
-    #Y_hat = X
-    #for i in range(len(model.Wks)+1):
-        #Y_hat = model.forward_pass_cnn(
-        #    X=Y_hat,
-        #    Ws=model.Wks[:i],
-        #    activation=model.activation,
-        #    stride=model.stride
-        #)
-    Y_cnn = model.forward_pass_cnn(
-        X=X,
-        Ws=model.Wks,
-        activation=model.activation,
-        stride=model.stride
-    )
-    for i in range(len(model.Whs)):
-        Y_hat = model.forward_pass_ffnn(
-            X=Y_cnn, 
-            Ws=model.Whs[:i], 
-            activation=model.activation
-        )
+    n_layers = len(model.Wks) + len(model.Whs)
+    for i in range(n_layers - 1):
+        W = model.Wks[i] if i < len(model.Wks) else model.Whs[i - len(model.Wks)]
+        Y_hat = forward_pass(layer=i)
+
         j = 2 * i
         axes[0,j].imshow(Y_hat, cmap="pink")
         axes[0,j].set_title(
@@ -41,11 +41,11 @@ def display_forward_pass_cnn(model: CNN, X:ndarray, Y:ndarray) -> None:
             if j == 0
             else f"Ŷ{SUBSCRIPTS[i]} = H{SUBSCRIPTS[i]}"
         )
-        axes[0,j + 1].imshow(model.Whs[i], cmap="inferno")
+        axes[0,j + 1].imshow(W, cmap="inferno")
         axes[0,j + 1].set_title(
             "Wᵢₙ"
             if i == 0
-            else "Wₒᵤₜ" if i == len(model.Whs) - 1 else f"W{SUBSCRIPTS[i]}"
+            else "Wₒᵤₜ" if i == n_layers - 1 else f"W{SUBSCRIPTS[i]}"
         )
 
         box1 = axes[0,j + 1].get_position()

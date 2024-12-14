@@ -29,39 +29,52 @@ def display_forward_pass_cnn(model: CNN, X: ndarray, Y: ndarray) -> None:
 
     _, axes = subplots(
         2,
-        2 * (len(model.Wks) + len(model.Whs)) + 2,
+        3 * len(model.Wks) + 2 * len(model.Whs) + 1,
         # subplot_kw={"projection": "3d"},
         figsize=(15, 5),
     )
 
     n_layers = len(model.Wks) + len(model.Whs)
-    for i in range(n_layers - 1):
-        W = model.Wks[i] if i < len(model.Wks) else model.Whs[i - len(model.Wks)]
+    counter = 0
+    for i, W in enumerate(model.Wks + model.Whs):
         Y_hat = forward_pass(layer=i)
-
-        j = 2 * i
-        axes[0, j].imshow(Y_hat, cmap="pink")
-        axes[0, j].set_title(
-            f"Ŷ{SUBSCRIPTS[i]} = X"
-            if j == 0
-            else f"Ŷ{SUBSCRIPTS[i]} = H{SUBSCRIPTS[i]}"
-        )
+        is_cnn_layer = int(i < len(model.Wks))
+        if counter and is_cnn_layer:
+            axes[0, counter].imshow(Y_hat, cmap="pink")
+            counter += 1
+        elif i > len(model.Wks):
+            axes[1, counter].axis("off")
+        axes[0, counter].imshow(Y_hat, cmap="pink")
+        counter += 1
+        # axes[0, j].set_title(
+        #    f"Ŷ{SUBSCRIPTS[i]} = X"
+        #    if j == 0
+        #    else f"Ŷ{SUBSCRIPTS[i]} = H{SUBSCRIPTS[i]}"
+        # )
         # axes[0, j + 1].voxels(W)
-        axes[0, j + 1].imshow(W, cmap="inferno")
-        axes[0, j + 1].set_title(
-            "Wᵢₙ" if i == 0 else "Wₒᵤₜ" if i == n_layers - 1 else f"W{SUBSCRIPTS[i]}"
-        )
+        axes[int(not is_cnn_layer), counter].axis("off")
+        axes[is_cnn_layer, counter].imshow(W, cmap="inferno")
+        counter += 1
+        # axes[is_cnn_layer, j + 1].set_title(
+        #    "Wᵢₙ" if i == 0 else "Wₒᵤₜ" if i == n_layers - 1 else f"W{SUBSCRIPTS[i]}"
+        # )
 
-        box1 = axes[0, j + 1].get_position()
-        box2 = axes[0, j + 2].get_position()
-
-        annotate(
-            "α",
-            xy=(box2.x0, (box2.y0 + box2.y1) / 2),
-            xytext=(box1.x1, (box1.y0 + box1.y1) / 2),
-            xycoords="figure fraction",
-            arrowprops=dict(arrowstyle="->", color="red", lw=1),
-        )
+        # box1 = axes[0, j + 1].get_position()
+        # box2 = axes[0, j + 2].get_position()
+        # annotate(
+        #    "α",
+        #    xy=(box2.x0, (box2.y0 + box2.y1) / 2),
+        #    xytext=(box1.x1, (box1.y0 + box1.y1) / 2),
+        #    xycoords="figure fraction",
+        #    arrowprops=dict(arrowstyle="->", color="red", lw=1),
+        # )
+    axes[0, counter].imshow(y_predicted, cmap="pink")
+    axes[1, counter].axis("off")
+    counter += 1
+    # axes[j].set_title(f"Ŷ{SUBSCRIPTS[i]} = Ŷₒᵤₜ")
+    axes[0, counter].imshow(y_expected, cmap="YlGn_r")
+    axes[1, counter].axis("off")
+    # axes[j + 1].set_title("Y")
     show()
 
 

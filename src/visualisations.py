@@ -19,6 +19,7 @@ def display_forward_pass_cnn(model: CNN, X: ndarray, Y: ndarray) -> None:
         figsize=(15, 5),
     )
 
+    n_weights = len(model.Wks + model.Whs)
     row = 0
     for i, W in enumerate(model.Wks + model.Whs):
 
@@ -36,6 +37,9 @@ def display_forward_pass_cnn(model: CNN, X: ndarray, Y: ndarray) -> None:
 
             axes[0, row].imshow(Y_hat, cmap="pink")
             axes[0, row + 1].imshow(W, cmap="inferno")
+
+            axes[0, row].set_title(f"Ŷ{SUBSCRIPTS[i+1]} = H{SUBSCRIPTS[i+1]}")
+            axes[0, row + 1].set_title(f"W{SUBSCRIPTS[i+1]}")
 
         else:  # cnn layers
             Y_hat = model.forward_pass_cnn(
@@ -76,34 +80,34 @@ def display_forward_pass_cnn(model: CNN, X: ndarray, Y: ndarray) -> None:
             )
             axes[0, row + 2].imshow(Y_hat_next, cmap="pink")
 
+            axes[0, row].set_title(f"Ŷ{SUBSCRIPTS[i+1]} = X" if i == 0 else f"Ŷ{SUBSCRIPTS[i+1]} = H{SUBSCRIPTS[i+1]}")
+            axes[1, row].set_title(f"Ŷ{SUBSCRIPTS[i+1]}ᶜⁿⁿ")
+            axes[1, row+1].set_title(f"W{SUBSCRIPTS[i+1]}")
+            axes[1, row+2].set_title(f"Ŷ{SUBSCRIPTS[i+2]}ᶜⁿⁿ")
+            axes[0, row+2].set_title(f"Ŷ{SUBSCRIPTS[i+2]} = H{SUBSCRIPTS[i+2]}")
+
+
+            # box1 = axes[0, j + 1].get_position()
+            # box2 = axes[0, j + 2].get_position()
+            # annotate(
+            #    "α",
+            #    xy=(box2.x0, (box2.y0 + box2.y1) / 2),
+            #    xytext=(box1.x1, (box1.y0 + box1.y1) / 2),
+            #    xycoords="figure fraction",
+            #    arrowprops=dict(arrowstyle="->", color="red", lw=1),
+            # )
+
         row += 2 + int(i < len(model.Wks) - 1)
+      
+    axes[1, row].axis("off")
+    axes[1, row+1].axis("off")
 
-        # axes[0, j].set_title(
-        #    f"Ŷ{SUBSCRIPTS[i]} = X"
-        #    if j == 0
-        #    else f"Ŷ{SUBSCRIPTS[i]} = H{SUBSCRIPTS[i]}"
-        # )
-        # axes[0, j + 1].voxels(W)
-        # axes[is_cnn_layer, j + 1].set_title(
-        #    "Wᵢₙ" if i == 0 else "Wₒᵤₜ" if i == n_layers - 1 else f"W{SUBSCRIPTS[i]}"
-        # )
-
-        # box1 = axes[0, j + 1].get_position()
-        # box2 = axes[0, j + 2].get_position()
-        # annotate(
-        #    "α",
-        #    xy=(box2.x0, (box2.y0 + box2.y1) / 2),
-        #    xytext=(box1.x1, (box1.y0 + box1.y1) / 2),
-        #    xycoords="figure fraction",
-        #    arrowprops=dict(arrowstyle="->", color="red", lw=1),
-        # )
     axes[0, row].imshow(y_predicted, cmap="pink")
-    axes[1, row].axis("off")
-    row += 1
-    # axes[j].set_title(f"Ŷ{SUBSCRIPTS[i]} = Ŷₒᵤₜ")
-    axes[0, row].imshow(y_expected, cmap="YlGn_r")
-    axes[1, row].axis("off")
-    # axes[j + 1].set_title("Y")
+    axes[0, row+1].imshow(y_expected, cmap="YlGn_r")
+
+    axes[0, row].set_title(f"Ŷ{SUBSCRIPTS[n_weights+1]} = Ŷₒᵤₜ")
+    axes[0, row + 1].set_title("Y")
+
     show()
 
 

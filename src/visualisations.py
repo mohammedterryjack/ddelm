@@ -38,8 +38,31 @@ def display_forward_pass_cnn(model: CNN, X: ndarray, Y: ndarray) -> None:
             axes[0, row].imshow(Y_hat, cmap="pink")
             axes[0, row + 1].imshow(W, cmap="inferno")
 
-            axes[0, row].set_title(f"Ŷ{SUBSCRIPTS[i+1]} = H{SUBSCRIPTS[i+1]}")
+            axes[0, row].set_title(
+                f"Ŷ{SUBSCRIPTS[i+1]} = f⁻¹(H{SUBSCRIPTS[i+1]})"
+                if i == len(model.Wks)
+                else f"Ŷ{SUBSCRIPTS[i+1]} = H{SUBSCRIPTS[i+1]}"
+            )
             axes[0, row + 1].set_title(f"W{SUBSCRIPTS[i+1]}")
+
+            box1 = axes[0, row].get_position()
+            box2 = axes[0, row + 1].get_position()
+            box3 = axes[0, row + 2].get_position()
+
+            annotate(
+                "",
+                xy=(box2.x0, (box2.y0 + box2.y1) / 2),
+                xytext=(box1.x1, (box1.y0 + box1.y1) / 2),
+                xycoords="figure fraction",
+                arrowprops=dict(arrowstyle="-", color="black", lw=1),
+            )
+            annotate(
+                "α",
+                xy=(box3.x0, (box3.y0 + box3.y1) / 2),
+                xytext=(box2.x1, (box2.y0 + box2.y1) / 2),
+                xycoords="figure fraction",
+                arrowprops=dict(arrowstyle="->", color="red", lw=1),
+            )
 
         else:  # cnn layers
             Y_hat = model.forward_pass_cnn(
@@ -80,30 +103,54 @@ def display_forward_pass_cnn(model: CNN, X: ndarray, Y: ndarray) -> None:
             )
             axes[0, row + 2].imshow(Y_hat_next, cmap="pink")
 
-            axes[0, row].set_title(f"Ŷ{SUBSCRIPTS[i+1]} = X" if i == 0 else f"Ŷ{SUBSCRIPTS[i+1]} = H{SUBSCRIPTS[i+1]}")
-            axes[1, row].set_title(f"Ŷ{SUBSCRIPTS[i+1]}ᶜⁿⁿ")
-            axes[1, row+1].set_title(f"W{SUBSCRIPTS[i+1]}")
-            axes[1, row+2].set_title(f"Ŷ{SUBSCRIPTS[i+2]}ᶜⁿⁿ")
-            axes[0, row+2].set_title(f"Ŷ{SUBSCRIPTS[i+2]} = H{SUBSCRIPTS[i+2]}")
+            axes[0, row].set_title(f"Ŷ{SUBSCRIPTS[i+1]} = X" if i == 0 else "")
+            axes[1, row].set_title(f"f(Ŷ{SUBSCRIPTS[i+1]})")
+            axes[1, row + 1].set_title(f"W{SUBSCRIPTS[i+1]}")
+            axes[1, row + 2].set_title(f"H{SUBSCRIPTS[i+2]}")
+            axes[0, row + 2].set_title(f"Ŷ{SUBSCRIPTS[i+2]} = f⁻¹(H{SUBSCRIPTS[i+2]})")
 
+            box1 = axes[0, row].get_position()
+            box2 = axes[1, row].get_position()
+            box3 = axes[1, row + 1].get_position()
+            box4 = axes[1, row + 2].get_position()
+            box5 = axes[0, row + 2].get_position()
 
-            # box1 = axes[0, j + 1].get_position()
-            # box2 = axes[0, j + 2].get_position()
-            # annotate(
-            #    "α",
-            #    xy=(box2.x0, (box2.y0 + box2.y1) / 2),
-            #    xytext=(box1.x1, (box1.y0 + box1.y1) / 2),
-            #    xycoords="figure fraction",
-            #    arrowprops=dict(arrowstyle="->", color="red", lw=1),
-            # )
+            annotate(
+                "",
+                xytext=((box1.x0 + box1.x1) / 2, box1.y0),
+                xy=((box2.x0 + box2.x1) / 2, box2.y1),
+                xycoords="figure fraction",
+                arrowprops=dict(arrowstyle="->", color="black", lw=1),
+            )
+            annotate(
+                "",
+                xytext=(box2.x1, (box2.y0 + box2.y1) / 2),
+                xy=(box3.x0, (box3.y0 + box3.y1) / 2),
+                xycoords="figure fraction",
+                arrowprops=dict(arrowstyle="->", color="black", lw=1),
+            )
+            annotate(
+                "α",
+                xytext=(box3.x1, (box3.y0 + box3.y1) / 2),
+                xy=(box4.x0, (box4.y0 + box4.y1) / 2),
+                xycoords="figure fraction",
+                arrowprops=dict(arrowstyle="->", color="red", lw=1),
+            )
+            annotate(
+                "",
+                xytext=((box4.x0 + box4.x1) / 2, box4.y1),
+                xy=((box5.x0 + box5.x1) / 2, box5.y0),
+                xycoords="figure fraction",
+                arrowprops=dict(arrowstyle="->", color="black", lw=1),
+            )
 
         row += 2 + int(i < len(model.Wks) - 1)
-      
+
     axes[1, row].axis("off")
-    axes[1, row+1].axis("off")
+    axes[1, row + 1].axis("off")
 
     axes[0, row].imshow(y_predicted, cmap="pink")
-    axes[0, row+1].imshow(y_expected, cmap="YlGn_r")
+    axes[0, row + 1].imshow(y_expected, cmap="YlGn_r")
 
     axes[0, row].set_title(f"Ŷ{SUBSCRIPTS[n_weights+1]} = Ŷₒᵤₜ")
     axes[0, row + 1].set_title("Y")

@@ -9,23 +9,8 @@ SUBSCRIPTS = ["₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "�
 
 
 def display_forward_pass_cnn(model: CNN, X: ndarray, Y: ndarray) -> None:
-
     y_expected = one_hot_encode(class_ids=Y, n_classes=model.d_o)
     y_predicted = one_hot_encode(class_ids=model.predict(X=X), n_classes=model.d_o)
-
-    forward_pass = lambda layer: (
-        model.forward_pass_cnn(
-            X=X, Ws=model.Wks[:layer], activation=model.activation, stride=model.stride
-        )
-        if layer < len(model.Wks)
-        else model.forward_pass_ffnn(
-            X=model.forward_pass_cnn(
-                X=X, Ws=model.Wks, activation=model.activation, stride=model.stride
-            ),
-            Ws=model.Whs[: layer - len(model.Wks)],
-            activation=model.activation,
-        )
-    )
 
     n_cols = 3 * len(model.Wks) + 2 * len(model.Whs) + 1
     fig, axes = subplots(
@@ -34,37 +19,64 @@ def display_forward_pass_cnn(model: CNN, X: ndarray, Y: ndarray) -> None:
         figsize=(15, 5),
     )
 
-    n_layers = len(model.Wks) + len(model.Whs)
-    counter = 0
+    row = 0
     for i, W in enumerate(model.Wks + model.Whs):
-        Y_hat = forward_pass(layer=i)
-        is_cnn_layer = int(i < len(model.Wks))
-        if is_cnn_layer:
-            if counter:
-                axes[0, counter].imshow(Y_hat, cmap="pink")
-                #axes[1, counter].imshow(Y_hat, cmap="pink") #todo; change to 3d of transformed prev
-                counter += 1
-        elif i > len(model.Wks):
-            axes[1, counter].axis("off")
-        axes[0, counter].imshow(Y_hat, cmap="pink")
-        if is_cnn_layer:
+
+        if i >= len(model.Wks):  # ffnn layers
+            Y_hat = model.forward_pass_ffnn(
+                X=model.forward_pass_cnn(
+                    X=X, Ws=model.Wks, activation=model.activation, stride=model.stride
+                ),
+                Ws=model.Whs[: i - len(model.Wks)],
+                activation=model.activation,
+            )
+
+            axes[1, row].axis("off")
+            axes[1, row + 1].axis("off")
+
+            axes[0, row].imshow(Y_hat, cmap="pink")
+            axes[0, row + 1].imshow(W, cmap="inferno")
+
+        else:  # cnn layers
+            Y_hat = model.forward_pass_cnn(
+                X=X, Ws=model.Wks[:i], activation=model.activation, stride=model.stride
+            )
             Y_hat_cnn = model.forward_pass_ff_to_cnn_layer(
                 ff_layer=Y_hat,
                 window_size=W.shape[0],
                 stride=model.stride,
             )
-            norm = Normalize(Y_hat_cnn.min(), Y_hat_cnn.max())  
-            axes[1, counter] = fig.add_subplot(2, n_cols-1, n_cols+counter, projection='3d')  
-            axes[1, counter].voxels(Y_hat_cnn, facecolors=cm.viridis(norm(Y_hat_cnn))) 
-        counter += 1
-        if is_cnn_layer:
-            axes[1, counter].imshow(W, cmap="inferno")
-            axes[0, counter].axis("off")
-        else:
-            axes[0, counter].imshow(W, cmap="inferno")
-            axes[1, counter].axis("off")
-        counter += 1
+            Y_hat_next_cnn = model.activation(Y_hat_cnn @ W)
+            Y_hat_next = model.forward_pass_cnn_to_ff_layer(cnn_layer=Y_hat_next_cnn)
 
+            axes[0, row + 1].axis("off")
+            axes[1, row].axis("off")
+            axes[1, row + 2].axis("off")
+
+            axes[1, row] = fig.add_subplot(2, n_cols - 1, n_cols + row, projection="3d")
+            axes[1, row + 2] = fig.add_subplot(
+                2, n_cols - 1, n_cols + row + 2, projection="3d"
+            )
+
+            axes[0, row].imshow(Y_hat, cmap="pink")
+            axes[1, row].voxels(
+                Y_hat_cnn,
+                facecolors=cm.pink(
+                    Normalize(Y_hat_cnn.min(), Y_hat_cnn.max())(Y_hat_cnn)
+                ),
+            )
+            axes[1, row + 1].imshow(W, cmap="inferno")
+            axes[1, row + 2].voxels(
+                Y_hat_next_cnn,
+                facecolors=cm.pink(
+                    Normalize(Y_hat_next_cnn.min(), Y_hat_next_cnn.max())(
+                        Y_hat_next_cnn
+                    )
+                ),
+            )
+            axes[0, row + 2].imshow(Y_hat_next, cmap="pink")
+
+        row += 2 + int(i < len(model.Wks) - 1)
 
         # axes[0, j].set_title(
         #    f"Ŷ{SUBSCRIPTS[i]} = X"
@@ -85,12 +97,12 @@ def display_forward_pass_cnn(model: CNN, X: ndarray, Y: ndarray) -> None:
         #    xycoords="figure fraction",
         #    arrowprops=dict(arrowstyle="->", color="red", lw=1),
         # )
-    axes[0, counter].imshow(y_predicted, cmap="pink")
-    axes[1, counter].axis("off")
-    counter += 1
+    axes[0, row].imshow(y_predicted, cmap="pink")
+    axes[1, row].axis("off")
+    row += 1
     # axes[j].set_title(f"Ŷ{SUBSCRIPTS[i]} = Ŷₒᵤₜ")
-    axes[0, counter].imshow(y_expected, cmap="YlGn_r")
-    axes[1, counter].axis("off")
+    axes[0, row].imshow(y_expected, cmap="YlGn_r")
+    axes[1, row].axis("off")
     # axes[j + 1].set_title("Y")
     show()
 

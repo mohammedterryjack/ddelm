@@ -7,6 +7,7 @@ from sklearn.neural_network import MLPClassifier
 from src.utils import Activation
 from src.elm import ELM
 from src.delm import DELM
+from src.cnn_delm import CNN
 
 
 for dataset in (
@@ -73,6 +74,18 @@ for dataset in (
         Y_delm = delm.predict(X=X_test)
         accuracy_delm = accuracy_score(Y_test, Y_delm)
 
+        cnn = CNN(
+            input_dimension=d_i,
+            output_dimension=d_o,
+            hidden_dimensions=dataset["delm_dimensions"],
+            kernel_sizes=[(5, 4), (7, 6)],
+            stride=1,
+            activation=a,
+        )
+        cnn.fit(X=X_train, y=Y_train)
+        Y_cnn = cnn.predict(X=X_test)
+        accuracy_cnn = accuracy_score(Y_test, Y_cnn)
+
         if a in (Activation.IDENTITY, Activation.RELU):
             dnn = MLPClassifier(
                 hidden_layer_sizes=dataset["delm_dimensions"], activation=a.name.lower()
@@ -91,6 +104,6 @@ for dataset in (
             accuracy_dnn = -1.0
 
         print(
-            f"\n\nDataset {dataset['name']}: (d_i={d_i}, d_o={d_o})\nActivation: {a.value}\nAccuracy: \n\tELM:{accuracy_elm * 100:.2f}%\n\tDELM:{accuracy_delm * 100:.2f}%\n\tDNN:{accuracy_dnn * 100:.2f}%"
+            f"\n\nDataset {dataset['name']}: (d_i={d_i}, d_o={d_o})\nActivation: {a.value}\nAccuracy: \n\tELM:{accuracy_elm * 100:.2f}%\n\tDELM:{accuracy_delm * 100:.2f}%\n\tDNN:{accuracy_dnn * 100:.2f}%\n\tCNN:{accuracy_cnn * 100:.2f}%"
         )
     show()

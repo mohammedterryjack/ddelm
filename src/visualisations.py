@@ -10,8 +10,8 @@ SUBSCRIPTS = ["₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "�
 
 
 def display_backward_pass_ffnn(model:FFNN, X:ndarray, Y:ndarray) -> None:
-    n_rows = len(model.Ws)
-    n_cols = 2 * len(model.Ws) + 2
+    n_rows = len(model.Ws)+1
+    n_cols = 2 * len(model.Ws) + 1
     _, axes = subplots(
         n_rows,
         n_cols,
@@ -19,14 +19,28 @@ def display_backward_pass_ffnn(model:FFNN, X:ndarray, Y:ndarray) -> None:
     )
 
     y_expected = one_hot_encode(class_ids=Y, n_classes=model.d_o)
-    
+    for j in range(len(model.Ws)):
+        Y_hat = model.forward(
+            X=X, 
+            Ws=model.Ws[:j], 
+            activation=model.activation
+        )
+        axes[0, 2*j].imshow(Y_hat, cmap='gray')
+        axes[0,1+2*j].imshow(model.Ws[j], cmap='gray')
+
+        axes[0, 2*j].set_title(f"Ŷ{SUBSCRIPTS[j+1]} = X" if j == 0 else f"Ŷ{SUBSCRIPTS[j+1]} = H{SUBSCRIPTS[j+1]}")
+        axes[0, 1+2*j].set_title(f"W{SUBSCRIPTS[j+1]}")
+
+    axes[0,-1].imshow(y_expected, cmap="YlGn_r")
+    axes[0, -1].set_title("Y")
+        
     for i in range(len(model.Ws)):
         
         Y_hat_next = model.backward(
             Y=y_expected, 
             Ws=model.Ws[i + 1 :], 
             inverse_activation=model.inverse_activation
-        ) if i < len(model.Ws) else Y_expected
+        ) if i < len(model.Ws) else y_expected
         Y_hat = model.forward(
             X=X, 
             Ws=model.Ws[:i], 
@@ -40,11 +54,30 @@ def display_backward_pass_ffnn(model:FFNN, X:ndarray, Y:ndarray) -> None:
                 Ws=model.Ws[:j], 
                 activation=model.activation
             )
-            axes[i, 2*j].imshow(Y_hat, cmap='pink')
-            axes[i,1+2*j].imshow(model.Ws[j])
-        y_predicted = model.forward(X=X,Ws=model.Ws,activation=model.activation)
-        axes[i,-2].imshow(y_predicted, cmap="pink")
-        axes[i,-1].imshow(y_expected, cmap="YlGn_r")
+            color = 'viridis' if i==j else 'gray'
+            axes[i+1, 2*j].imshow(Y_hat, cmap='gray')
+            axes[i+1,1+2*j].imshow(model.Ws[j], cmap=color)
+        
+        axes[i+1,-1].imshow(y_expected, cmap="YlGn_r")
+
+        box = axes[i+1, 2*i+1].get_position()
+        box_start = axes[i+1, 0].get_position()
+        box_end = axes[i+1, -1].get_position()
+            
+        annotate(
+            "",
+            xytext=(box_start.x1, (box_start.y0+box_start.y1)/2),
+            xy=(box.x0 , (box.y0+box.y1)/2),
+            xycoords="figure fraction",
+            arrowprops=dict(arrowstyle="->", color="green", lw=1),
+        )
+        annotate(
+            "",
+            xytext=(box_end.x1, (box_end.y0+box_end.y1)/2),
+            xy=(box.x1 , (box.y0+box.y1)/2),
+            xycoords="figure fraction",
+            arrowprops=dict(arrowstyle="->", color="orange", lw=1),
+        )
     show()
 
 

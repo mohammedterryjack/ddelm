@@ -12,5 +12,5 @@ ffnn = FFNN(
     activation=Activation.RELU,
 )
 #display_forward_pass_ffnn(model=ffnn, X=data.data[:100], Y=data.target[:100])
-display_backward_pass_ffnn(model=ffnn, X=data.data[:20], Y=data.target[:20])
+display_backward_pass_ffnn(model=ffnn, X=data.data[:100], Y=data.target[:100])
 #display_forward_pass_ffnn(model=ffnn, X=data.data[:100], Y=data.target[:100])

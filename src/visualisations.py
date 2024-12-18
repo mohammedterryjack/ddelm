@@ -35,12 +35,16 @@ def display_backward_pass_ffnn(model:FFNN, X:ndarray, Y:ndarray) -> None:
         model.Ws[i] = pinv(Y_hat) @ Y_hat_next
 
         for j in range(len(model.Ws)):
+            Y_hat = model.forward(
+                X=X, 
+                Ws=model.Ws[:j], 
+                activation=model.activation
+            )
+            axes[i, 2*j].imshow(Y_hat, cmap='pink')
             axes[i,1+2*j].imshow(model.Ws[j])
-    
-    #axes[j].imshow(y_predicted, cmap="pink")
-    #axes[j].set_title(f"Ŷ{SUBSCRIPTS[i]} = Ŷₒᵤₜ")
-    #axes[j + 1].imshow(y_expected, cmap="YlGn_r")
-    #axes[j + 1].set_title("Y")
+        y_predicted = model.forward(X=X,Ws=model.Ws,activation=model.activation)
+        axes[i,-2].imshow(y_predicted, cmap="pink")
+        axes[i,-1].imshow(y_expected, cmap="YlGn_r")
     show()
 
 

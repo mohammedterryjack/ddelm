@@ -1,11 +1,47 @@
 from matplotlib.pyplot import subplots, show, annotate, Normalize, cm
 from numpy import ndarray
+from numpy.linalg import pinv
 
-from src.cnn_delm import CNN
-from src.delm import DELM
+from src.cnn import CNN
+from src.ffnn import FFNN
 from src.utils import one_hot_encode
 
 SUBSCRIPTS = ["₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉"]
+
+
+def display_backward_pass_ffnn(model:FFNN, X:ndarray, Y:ndarray) -> None:
+    n_rows = len(model.Ws)
+    n_cols = 2 * len(model.Ws) + 2
+    _, axes = subplots(
+        n_rows,
+        n_cols,
+        figsize=(15, 5),
+    )
+
+    y_expected = one_hot_encode(class_ids=Y, n_classes=model.d_o)
+    
+    for i in range(len(model.Ws)):
+        
+        Y_hat_next = model.backward(
+            Y=y_expected, 
+            Ws=model.Ws[i + 1 :], 
+            inverse_activation=model.inverse_activation
+        ) if i < len(model.Ws) else Y_expected
+        Y_hat = model.forward(
+            X=X, 
+            Ws=model.Ws[:i], 
+            activation=model.activation
+        )
+        model.Ws[i] = pinv(Y_hat) @ Y_hat_next
+
+        for j in range(len(model.Ws)):
+            axes[i,1+2*j].imshow(model.Ws[j])
+    
+    #axes[j].imshow(y_predicted, cmap="pink")
+    #axes[j].set_title(f"Ŷ{SUBSCRIPTS[i]} = Ŷₒᵤₜ")
+    #axes[j + 1].imshow(y_expected, cmap="YlGn_r")
+    #axes[j + 1].set_title("Y")
+    show()
 
 
 def display_forward_pass_cnn(model: CNN, X: ndarray, Y: ndarray) -> None:
@@ -158,7 +194,7 @@ def display_forward_pass_cnn(model: CNN, X: ndarray, Y: ndarray) -> None:
     show()
 
 
-def display_forward_pass_ffnn(model: DELM, X: ndarray, Y: ndarray) -> None:
+def display_forward_pass_ffnn(model: FFNN, X: ndarray, Y: ndarray) -> None:
 
     y_expected = one_hot_encode(class_ids=Y, n_classes=model.d_o)
     y_predicted = one_hot_encode(class_ids=model.predict(X=X), n_classes=model.d_o)

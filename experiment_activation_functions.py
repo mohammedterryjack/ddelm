@@ -6,8 +6,8 @@ from sklearn.neural_network import MLPClassifier
 
 from src.utils import Activation
 from src.elm import ELM
-from src.delm import DELM
-from src.cnn_delm import CNN
+from src.ffnn import FFNN
+from src.cnn import CNN
 
 
 for dataset in (
@@ -15,13 +15,13 @@ for dataset in (
         name="breast cancer",
         loader=load_breast_cancer,
         elm_dimensions=100,
-        delm_dimensions=[40, 30, 20, 10],
+        ffnn_dimensions=[40, 30, 20, 10],
     ),
     dict(
         name="digits",
         loader=load_digits,
         elm_dimensions=1000,
-        delm_dimensions=[400, 300, 200, 100],
+        ffnn_dimensions=[400, 300, 200, 100],
     ),
 ):
     data = dataset["loader"]()
@@ -30,11 +30,11 @@ for dataset in (
     )
 
     _, elm_axes = subplots(len(Activation), 2, figsize=(15, 5))
-    _, delm_axes = subplots(
-        len(Activation), len(dataset["delm_dimensions"]) + 1, figsize=(15, 5)
+    _, ffnn_axes = subplots(
+        len(Activation), len(dataset["ffnn_dimensions"]) + 1, figsize=(15, 5)
     )
     _, dnn_axes = subplots(
-        len(Activation), len(dataset["delm_dimensions"]) + 1, figsize=(15, 5)
+        len(Activation), len(dataset["ffnn_dimensions"]) + 1, figsize=(15, 5)
     )
     for j, a in enumerate(Activation):
         _, d_i = data.data.shape
@@ -57,27 +57,27 @@ for dataset in (
         Y_elm = elm.predict(X=X_test)
         accuracy_elm = accuracy_score(Y_test, Y_elm)
 
-        delm = DELM(
+        ffnn = FFNN(
             input_dimension=d_i,
             output_dimension=d_o,
-            hidden_dimensions=dataset["delm_dimensions"],
+            hidden_dimensions=dataset["ffnn_dimensions"],
             activation=a,
         )
-        delm.fit(X=X_train, y=Y_train)
-        for i, W in enumerate(delm.Ws):
-            ax = delm_axes[j, i]
+        ffnn.fit(X=X_train, y=Y_train)
+        for i, W in enumerate(ffnn.Ws):
+            ax = ffnn_axes[j, i]
             ax.imshow(W)
             if i == 0:
                 ax.set_ylabel(a.name)
             if j == len(Activation) - 1:
                 ax.set_xlabel(f"W {i}")
-        Y_delm = delm.predict(X=X_test)
-        accuracy_delm = accuracy_score(Y_test, Y_delm)
+        Y_ffnn = ffnn.predict(X=X_test)
+        accuracy_ffnn = accuracy_score(Y_test, Y_ffnn)
 
         cnn = CNN(
             input_dimension=d_i,
             output_dimension=d_o,
-            hidden_dimensions=dataset["delm_dimensions"],
+            hidden_dimensions=dataset["ffnn_dimensions"],
             kernel_sizes=[(5, 4), (7, 6)],
             stride=1,
             activation=a,
@@ -88,7 +88,7 @@ for dataset in (
 
         if a in (Activation.IDENTITY, Activation.RELU):
             dnn = MLPClassifier(
-                hidden_layer_sizes=dataset["delm_dimensions"], activation=a.name.lower()
+                hidden_layer_sizes=dataset["ffnn_dimensions"], activation=a.name.lower()
             )
             dnn.fit(X=X_train, y=Y_train)
             for i, W in enumerate(dnn.coefs_):
@@ -104,6 +104,6 @@ for dataset in (
             accuracy_dnn = -1.0
 
         print(
-            f"\n\nDataset {dataset['name']}: (d_i={d_i}, d_o={d_o})\nActivation: {a.value}\nAccuracy: \n\tELM:{accuracy_elm * 100:.2f}%\n\tDELM:{accuracy_delm * 100:.2f}%\n\tDNN:{accuracy_dnn * 100:.2f}%\n\tCNN:{accuracy_cnn * 100:.2f}%"
+            f"\n\nDataset {dataset['name']}: (d_i={d_i}, d_o={d_o})\nActivation: {a.value}\nAccuracy: \n\tELM:{accuracy_elm * 100:.2f}%\n\tDELM:{accuracy_ffnn * 100:.2f}%\n\tDNN:{accuracy_dnn * 100:.2f}%\n\tCNN:{accuracy_cnn * 100:.2f}%"
         )
     show()

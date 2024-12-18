@@ -2,7 +2,7 @@ from sklearn.datasets import load_digits
 from sklearn.metrics import accuracy_score
 
 from src.utils import Activation
-from src.cnn_delm import CNN
+from src.cnn import CNN
 from src.visualisations import display_forward_pass_cnn
 
 data = load_digits()

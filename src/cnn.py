@@ -1,4 +1,4 @@
-"""Convolutional Neural Network (CNN) variation of Deep Extreme Learning Machine (DELM)"""
+"""Convolutional Neural Network (CNN) using Pseudoinverse"""
 
 from numpy import ndarray, argmax, where, zeros, divide, mean
 from numpy.random import seed, uniform
@@ -81,6 +81,7 @@ class CNN:
                 activation=self.activation,
             )
         )
+        #TODO: is this fitting the last layer too?
         backward_pass = lambda layer: (
             self.backward_pass_cnn_to_ff_layer(
                 ff_layer=self.backward_pass_cnn(

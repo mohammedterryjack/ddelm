@@ -2,7 +2,7 @@ from sklearn.datasets import load_breast_cancer
 from matplotlib.pyplot import subplots, show
 
 from src.utils import Activation, one_hot_encode
-from src.delm import DELM
+from src.ffnn import FFNN
 
 data = load_breast_cancer()
 
@@ -20,12 +20,12 @@ y_test = y[:100]
 for a in Activation:
     if a != Activation.RELU:
         continue
-    delm = DELM(
+    ffnn = FFNN(
         input_dimension=d_i, output_dimension=d_o, hidden_dimensions=[100], activation=a
     )
-    delm.fit(X=X, y=Y)
+    ffnn.fit(X=X, y=Y)
 
-    y_hat = delm.forward(X=X_test, Ws=delm.Ws, activation=delm.activation)
+    y_hat = ffnn.forward(X=X_test, Ws=ffnn.Ws, activation=ffnn.activation)
     _, axes = subplots(1, 3, figsize=(15, 5))
     axes[0].imshow(y_test, cmap="pink")
     axes[1].imshow(y_hat, cmap="pink")
@@ -35,8 +35,8 @@ for a in Activation:
     axes[2].set_title("dy (error)")
     show()
 
-    X_hat = delm.backward(
-        Y=y_hat, Ws=delm.Ws, inverse_activation=delm.inverse_activation
+    X_hat = ffnn.backward(
+        Y=y_hat, Ws=ffnn.Ws, inverse_activation=ffnn.inverse_activation
     )
     _, axes = subplots(1, 3, figsize=(15, 5))
     axes[0].imshow(X_test, cmap="pink")
@@ -47,8 +47,8 @@ for a in Activation:
     axes[2].set_title("dX (error)")
     show()
 
-    X_hat = delm.backward(
-        Y=y_test, Ws=delm.Ws, inverse_activation=delm.inverse_activation
+    X_hat = ffnn.backward(
+        Y=y_test, Ws=ffnn.Ws, inverse_activation=ffnn.inverse_activation
     )
     _, axes = subplots(1, 3, figsize=(15, 5))
     axes[0].imshow(X_test, cmap="pink")

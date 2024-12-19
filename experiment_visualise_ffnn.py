@@ -8,9 +8,8 @@ data = load_breast_cancer()
 ffnn = FFNN(
     input_dimension=data.data.shape[1],
     output_dimension=max(data.target) + 1,
-    hidden_dimensions=[10, 5, 6, 8],
+    hidden_dimensions=[10, 5, 4],
     activation=Activation.RELU,
 )
-#display_forward_pass_ffnn(model=ffnn, X=data.data[:100], Y=data.target[:100])
 display_backward_pass_ffnn(model=ffnn, X=data.data[:100], Y=data.target[:100])
-#display_forward_pass_ffnn(model=ffnn, X=data.data[:100], Y=data.target[:100])
+display_forward_pass_ffnn(model=ffnn, X=data.data[:100], Y=data.target[:100])

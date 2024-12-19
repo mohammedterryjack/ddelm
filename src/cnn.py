@@ -96,13 +96,15 @@ class CNN:
                 window_size=self.Wks[layer].shape[1],
             )
             if layer < len(self.Wks)
-            else self.backward_pass_ffnn(
-                Y=Y,
-                Ws=self.Whs[layer + 1 - len(self.Wks) :],
-                inverse_activation=self.inverse_activation,
+            else (
+                self.backward_pass_ffnn(
+                    Y=Y,
+                    Ws=self.Whs[layer + 1 - len(self.Wks) :],
+                    inverse_activation=self.inverse_activation,
+                )
+                if layer < len(self.Wks) + len(self.Whs)
+                else Y
             )
-            if layer < len(self.Wks) + len(self.Whs)
-            else Y
         )
 
         for layer_i in range(len(self.Wks) + len(self.Whs)):

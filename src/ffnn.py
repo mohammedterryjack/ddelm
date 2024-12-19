@@ -31,9 +31,13 @@ class FFNN:
     def fit(self, X: ndarray, y: ndarray) -> None:
         Y = one_hot_encode(class_ids=y, n_classes=self.d_o)
         for i in range(len(self.Ws)):
-            Y_hat_next = self.backward(
-                Y=Y, Ws=self.Ws[i + 1 :], inverse_activation=self.inverse_activation
-            ) if i < len(self.Ws) else Y
+            Y_hat_next = (
+                self.backward(
+                    Y=Y, Ws=self.Ws[i + 1 :], inverse_activation=self.inverse_activation
+                )
+                if i < len(self.Ws)
+                else Y
+            )
             Y_hat = self.forward(X=X, Ws=self.Ws[:i], activation=self.activation)
             self.Ws[i] = pinv(Y_hat) @ Y_hat_next
 

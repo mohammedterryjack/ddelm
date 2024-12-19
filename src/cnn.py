@@ -81,7 +81,6 @@ class CNN:
                 activation=self.activation,
             )
         )
-        #TODO: is this fitting the last layer too?
         backward_pass = lambda layer: (
             self.backward_pass_cnn_to_ff_layer(
                 ff_layer=self.backward_pass_cnn(
@@ -102,9 +101,11 @@ class CNN:
                 Ws=self.Whs[layer + 1 - len(self.Wks) :],
                 inverse_activation=self.inverse_activation,
             )
+            if layer < len(self.Wks) + len(self.Whs)
+            else Y
         )
 
-        for layer_i in range(len(self.Wks) + len(self.Whs) - 1):
+        for layer_i in range(len(self.Wks) + len(self.Whs)):
             Y_hat = forward_pass(layer=layer_i)
             Y_hat_next = backward_pass(layer=layer_i)
             W = pinv(Y_hat) @ Y_hat_next

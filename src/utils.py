@@ -4,43 +4,29 @@ from numpy import (
     ndarray,
     zeros,
     maximum,
-    sin,
-    arcsin,
     nan_to_num,
-    cos,
-    arccos,
     tan,
     arctan,
 )
-from scipy.fft import dct, idct
 
 
 class Activation(Enum):
     IDENTITY = "identity"
     RELU = "rectified linear unit"
-    SIN = "sine"
-    COS = "cosine"
     TAN = "tan"
-    CT = "cosine transform"
 
 
 def activation_function(activation: Activation) -> callable:
     return {
         Activation.IDENTITY: lambda x: x,
         Activation.RELU: lambda x: maximum(0, x),
-        Activation.SIN: sin,
-        Activation.COS: cos,
         Activation.TAN: tan,
-        Activation.CT: dct,
     }[activation]
 
 
 def inverse_activation(activation: Activation) -> callable:
     f = {
-        Activation.SIN: arcsin,
-        Activation.COS: arccos,
         Activation.TAN: arctan,
-        Activation.CT: idct,
     }.get(activation, lambda x: x)
     return lambda x: nan_to_num(f(x), nan=0.0)
 

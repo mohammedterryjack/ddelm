@@ -17,10 +17,10 @@ from scipy.fft import dct, idct
 
 class Activation(Enum):
     IDENTITY = "identity"
+    RELU = "rectified linear unit"
     SIN = "sine"
     COS = "cosine"
     TAN = "tan"
-    RELU = "rectified linear unit"
     CT = "cosine transform"
 
 

@@ -38,8 +38,6 @@ for j, a in enumerate(Activation):
         stride=1,
         activation=a,
     )
-    #if a not in (Activation.IDENTITY, Activation.RELU):
-    #    continue
     
     elm.fit(X=X_train, y=Y_train)
     ffnn.fit(X=X_train, y=Y_train)

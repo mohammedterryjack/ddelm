@@ -1,7 +1,11 @@
-from matplotlib.pyplot import subplots, show
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_breast_cancer, load_digits
+from sklearn.datasets import (
+    load_breast_cancer,
+    load_iris,
+    load_wine,
+    make_classification
+)
 from sklearn.neural_network import MLPClassifier
 
 from src.utils import Activation
@@ -9,36 +13,71 @@ from src.elm import ELM
 from src.ffnn import FFNN
 from src.cnn import CNN
 
+#NLTK Datasets
+    #Reuters
+    #Movie Reviews
+    #20 Newsgroups
+#Hugging Face Datasets
+    #AG News
+    #IMDb
+    #TREC
+    #Yahoo Answers
+    #TweetEval
+    
 
-for dataset in (
-    dict(
-        name="breast cancer",
-        loader=load_breast_cancer,
-        elm_dimensions=100,
-        ffnn_dimensions=[40, 30, 20, 10],
+a = Activation.RELU
+d_hs = [3,2]
+tasks = {
+    "breast cancer":lambda : (
+        load_breast_cancer().data,
+        load_breast_cancer().target 
     ),
-    dict(
-        name="digits",
-        loader=load_digits,
-        elm_dimensions=1000,
-        ffnn_dimensions=[400, 300, 200, 100],
+    "iris":lambda :(
+        load_iris().data,
+        load_iris().target,
     ),
-):
-    continue
+    "wine":lambda :(
+        load_wine().data,
+        load_wine().target
+    ),
+    "synthetic":make_classification
+}
 
-    # if a in (Activation.IDENTITY, Activation.RELU):
-    #         dnn = MLPClassifier(
-    #             hidden_layer_sizes=dataset["ffnn_dimensions"], activation=a.name.lower()
-    #         )
-    #         dnn.fit(X=X_train, y=Y_train)
-    #         for i, W in enumerate(dnn.coefs_):
-    #             ax = dnn_axes[j, i]
-    #             ax.imshow(W)
-    #             if i == 0:
-    #                 ax.set_ylabel(a.name)
-    #             if j == len(Activation) - 1:
-    #                 ax.set_xlabel(f"W {i}")
-    #         Y_dnn = dnn.predict(X=X_test)
-    #         accuracy_dnn = accuracy_score(Y_test, Y_dnn)
-    #     else:
-    #         accuracy_dnn = -1.0
+for task_name,load_dataset in tasks.items():
+    X,y = load_dataset()
+    X_train, X_test, Y_train, Y_test = train_test_split(
+        X, y, test_size=0.01, random_state=42
+    )
+
+    _, d_i = X.shape
+    d_o = max(y) + 1
+
+    elm = ELM(
+        input_dimension=d_i,
+        output_dimension=d_o,
+        hidden_dimension=sum(d_hs),
+        activation=a,
+    )
+    ffnn = FFNN(
+        input_dimension=d_i,
+        output_dimension=d_o,
+        hidden_dimensions=d_hs,
+        activation=a,
+    )
+    dnn = MLPClassifier(
+        hidden_layer_sizes=d_hs, 
+        activation=a.name.lower()
+    )
+
+    elm.fit(X=X_train, y=Y_train)
+    ffnn.fit(X=X_train, y=Y_train)    
+    dnn.fit(X=X_train, y=Y_train)
+    
+    Y_elm = elm.predict(X=X_test)
+    Y_ffnn = ffnn.predict(X=X_test)
+    Y_dnn = dnn.predict(X=X_test)
+
+    accuracy_elm = accuracy_score(Y_test, Y_elm)
+    accuracy_ffnn = accuracy_score(Y_test, Y_ffnn)
+    accuracy_dnn = accuracy_score(Y_test, Y_dnn)
+    print(f"Task: {task_name}\n\tELM:{accuracy_elm * 100:.2f}%\n\tFFNN:{accuracy_ffnn * 100:.2f}%\n\tDNN:{accuracy_dnn * 100:.2f}%")    

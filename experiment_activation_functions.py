@@ -38,11 +38,11 @@ for j, a in enumerate(Activation):
         stride=1,
         activation=a,
     )
-    
+
     elm.fit(X=X_train, y=Y_train)
     ffnn.fit(X=X_train, y=Y_train)
     cnn.fit(X=X_train, y=Y_train)
-       
+
     Y_elm = elm.predict(X=X_test)
     Y_ffnn = ffnn.predict(X=X_test)
     Y_cnn = cnn.predict(X=X_test)
@@ -50,5 +50,6 @@ for j, a in enumerate(Activation):
     accuracy_elm = accuracy_score(Y_test, Y_elm)
     accuracy_ffnn = accuracy_score(Y_test, Y_ffnn)
     accuracy_cnn = accuracy_score(Y_test, Y_cnn)
-    print(f"Activation: {a.value}\n\tELM:{accuracy_elm * 100:.2f}%\n\tFFNN:{accuracy_ffnn * 100:.2f}%\n\tCNN:{accuracy_cnn * 100:.2f}%")    
-
+    print(
+        f"Activation: {a.value}\n\tELM:{accuracy_elm * 100:.2f}%\n\tFFNN:{accuracy_ffnn * 100:.2f}%\n\tCNN:{accuracy_cnn * 100:.2f}%"
+    )
